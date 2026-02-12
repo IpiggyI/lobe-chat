@@ -20,8 +20,13 @@ const styles = createStaticStyles(({ css }) => ({
 
 const SearchResultItem = memo<UniformSearchResult & { style?: CSSProperties }>(
   ({ url, title, style }) => {
-    const urlObj = new URL(url);
-    const host = urlObj.hostname;
+    let host: string;
+    try {
+      host = new URL(url).hostname;
+    } catch {
+      return null;
+    }
+
     return (
       <a href={url} target={'_blank'}>
         <Block
