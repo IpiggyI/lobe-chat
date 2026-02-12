@@ -114,6 +114,90 @@ describe('SearchService', () => {
     });
   });
 
+  describe('Round-Robin + Fallback', () => {
+    const mockResponse = (source: string) => ({
+      costTime: 100,
+      query: 'test',
+      resultNumbers: 1,
+      results: [{ category: 'general', content: source, engines: [source], parsedUrl: '', score: 1, title: source, url: '' }],
+    });
+
+    it('should rotate providers across consecutive calls', async () => {
+      const mockImplA = createMockSearchImpl();
+      const mockImplB = createMockSearchImpl();
+      mockImplA.query.mockResolvedValue(mockResponse('A'));
+      mockImplB.query.mockResolvedValue(mockResponse('B'));
+
+      vi.mocked(createSearchServiceImpl)
+        .mockReturnValueOnce(mockImplA as any)
+        .mockReturnValueOnce(mockImplB as any);
+
+      vi.mocked(toolsEnv).SEARCH_PROVIDERS = 'tavily,brave';
+      searchService = new SearchService();
+
+      const result1 = await searchService.query('test');
+      const result2 = await searchService.query('test');
+      const result3 = await searchService.query('test');
+
+      // Round-Robin: A → B → A
+      expect(result1.results[0].content).toBe('A');
+      expect(result2.results[0].content).toBe('B');
+      expect(result3.results[0].content).toBe('A');
+    });
+
+    it('should fallback to next provider when primary fails', async () => {
+      const mockImplA = createMockSearchImpl();
+      const mockImplB = createMockSearchImpl();
+      mockImplA.query.mockRejectedValue(new Error('Provider A failed'));
+      mockImplB.query.mockResolvedValue(mockResponse('B'));
+
+      vi.mocked(createSearchServiceImpl)
+        .mockReturnValueOnce(mockImplA as any)
+        .mockReturnValueOnce(mockImplB as any);
+
+      vi.mocked(toolsEnv).SEARCH_PROVIDERS = 'tavily,brave';
+      searchService = new SearchService();
+
+      const result = await searchService.query('test');
+
+      expect(mockImplA.query).toHaveBeenCalledTimes(1);
+      expect(mockImplB.query).toHaveBeenCalledTimes(1);
+      expect(result.results[0].content).toBe('B');
+    });
+
+    it('should throw primary error when all providers fail', async () => {
+      const mockImplA = createMockSearchImpl();
+      const mockImplB = createMockSearchImpl();
+      const primaryError = new Error('Provider A failed');
+      mockImplA.query.mockRejectedValue(primaryError);
+      mockImplB.query.mockRejectedValue(new Error('Provider B failed'));
+
+      vi.mocked(createSearchServiceImpl)
+        .mockReturnValueOnce(mockImplA as any)
+        .mockReturnValueOnce(mockImplB as any);
+
+      vi.mocked(toolsEnv).SEARCH_PROVIDERS = 'tavily,brave';
+      searchService = new SearchService();
+
+      await expect(searchService.query('test')).rejects.toThrow('Provider A failed');
+    });
+
+    it('should work identically with single provider', async () => {
+      const mockImpl = createMockSearchImpl();
+      mockImpl.query.mockResolvedValue(mockResponse('single'));
+
+      vi.mocked(createSearchServiceImpl).mockReturnValueOnce(mockImpl as any);
+
+      vi.mocked(toolsEnv).SEARCH_PROVIDERS = 'tavily';
+      searchService = new SearchService();
+
+      const result = await searchService.query('test');
+
+      expect(result.results[0].content).toBe('single');
+      expect(mockImpl.query).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('webSearch', () => {
     it('should return results on first attempt if results found', async () => {
       const mockResponse = {
