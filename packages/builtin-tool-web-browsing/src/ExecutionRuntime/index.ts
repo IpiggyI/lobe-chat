@@ -58,6 +58,9 @@ export class WebBrowsingExecutionRuntime {
         };
       }
 
+      // Filter out results with empty or invalid URLs
+      data.results = data.results.filter((item) => item.url);
+
       // add LIMITED_COUNT search results to message content
       const searchContent: SearchContent[] = data.results
         .slice(0, SEARCH_ITEM_LIMITED_COUNT)
