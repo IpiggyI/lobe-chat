@@ -8,14 +8,7 @@ import debug from 'debug';
 import urlJoin from 'url-join';
 
 import { type SearchServiceImpl } from '../type';
-import { type Search1ApiRawResponse, type TimeRange } from './type';
-
-const timeRangeMapping: Record<string, TimeRange | undefined> = {
-  day: 'day',
-  month: 'month',
-  week: 'month', // Search1API doesn't support 'week', map to closest
-  year: 'year',
-};
+import { type Search1ApiResponse } from './type';
 
 interface Search1APIQueryParams {
   crawl_results?: 0 | 1;
@@ -63,7 +56,7 @@ export class Search1APIImpl implements SearchServiceImpl {
         ...defaultQueryParams,
         time_range:
           params?.searchTimeRange && params.searchTimeRange !== 'anytime'
-            ? timeRangeMapping[params.searchTimeRange]
+            ? params.searchTimeRange
             : undefined,
       },
     ];
@@ -76,7 +69,7 @@ export class Search1APIImpl implements SearchServiceImpl {
         search_service: searchEngine,
         time_range:
           params?.searchTimeRange && params.searchTimeRange !== 'anytime'
-            ? timeRangeMapping[params.searchTimeRange]
+            ? params.searchTimeRange
             : undefined,
       }));
     }
@@ -125,20 +118,23 @@ export class Search1APIImpl implements SearchServiceImpl {
     }
 
     try {
-      const rawResponse = (await response.json()) as Search1ApiRawResponse;
+      const rawResponse = await response.json();
+      // Search1API returns a single object for single queries, an array for batch queries
+      const search1ApiResponse: Search1ApiResponse[] = Array.isArray(rawResponse)
+        ? rawResponse
+        : [rawResponse];
 
-      log('Parsed Search1API response: %o', rawResponse);
+      log('Parsed Search1API response: %o', search1ApiResponse);
 
-      const mappedResults = (rawResponse.results || []).flatMap((item) => {
-        if (!item.success || !item.data) return [];
-        const { results = [], searchParameters } = item.data;
-        return results.map(
+      const mappedResults = search1ApiResponse.flatMap((response) => {
+        // Map Search1API response to SearchResponse
+        return (response.results || []).map(
           (result): UniformSearchResult => ({
-            category: 'general',
-            content: result.content || result.snippet || '',
-            engines: [searchParameters?.search_service || ''],
-            parsedUrl: result.link ? new URL(result.link).hostname : '',
-            score: 1,
+            category: 'general', // Default category
+            content: result.content || result.snippet || '', // Prioritize content, fallback to snippet
+            engines: [response.searchParameters?.search_service || ''],
+            parsedUrl: result.link ? new URL(result.link).hostname : '', // Basic URL parsing
+            score: 1, // Default score
             title: result.title || '',
             url: result.link,
           }),

@@ -30,10 +30,11 @@ const getMemorySnapshot = () => {
 
 /**
  * Search service class
- * Uses different implementations for different search operations
+ * Uses Round-Robin + Fallback strategy across configured providers
  */
 export class SearchService {
-  private searchImpList: SearchServiceImpl[];
+  private currentIndex = 0;
+  private searchImplInstances: SearchServiceImpl[];
 
   private get crawlerImpls() {
     return parseImplEnv(toolsEnv.CRAWLER_IMPLS);
@@ -48,10 +49,11 @@ export class SearchService {
   }
 
   constructor() {
-    const impls = this.searchImpls;
-    this.searchImpList =
-      impls.length > 0
-        ? impls.map((impl) => createSearchServiceImpl(impl))
+    const implTypes = this.searchImplTypes;
+
+    this.searchImplInstances =
+      implTypes.length > 0
+        ? implTypes.map((type) => createSearchServiceImpl(type))
         : [createSearchServiceImpl()];
   }
 
@@ -131,61 +133,49 @@ export class SearchService {
     return !('contentType' in result.data);
   }
 
-  private get searchImpls() {
+  /**
+   * Get the next provider index via Round-Robin
+   */
+  private getNextIndex(): number {
+    const index = this.currentIndex;
+    this.currentIndex = (this.currentIndex + 1) % this.searchImplInstances.length;
+    return index;
+  }
+
+  private get searchImplTypes() {
     return parseImplEnv(toolsEnv.SEARCH_PROVIDERS) as SearchImplType[];
   }
 
   /**
-   * Query for search results using the specified impl
+   * Query with Round-Robin provider selection and Fallback on error
    */
-  private async queryWithImpl(impl: SearchServiceImpl, query: string, params?: SearchParams) {
+  async query(query: string, params?: SearchParams) {
+    const impls = this.searchImplInstances;
+    const primaryIndex = this.getNextIndex();
+
+    // Try the primary provider first
     try {
-      return await impl.query(query, params);
-    } catch (e) {
-      console.error('[SearchService] query failed:', (e as Error).message);
-      return {
-        costTime: 0,
-        errorDetail: (e as Error).message,
-        query,
-        resultNumbers: 0,
-        results: [],
-      };
+      return await impls[primaryIndex].query(query, params);
+    } catch (primaryError) {
+      // Fallback: try remaining providers in order
+      for (let i = 0; i < impls.length; i++) {
+        if (i === primaryIndex) continue;
+
+        try {
+          return await impls[i].query(query, params);
+        } catch {
+          // continue to next provider
+        }
+      }
+
+      // All providers failed, throw the primary error
+      throw primaryError;
     }
   }
 
-  /**
-   * Query for search results (uses the first provider)
-   */
-  async query(query: string, params?: SearchParams) {
-    return this.queryWithImpl(this.searchImpList[0], query, params);
-  }
-
   async webSearch({ query, searchCategories, searchEngines, searchTimeRange }: SearchQuery) {
-    try {
-      if (log.enabled) {
-        log(
-          'webSearch:start providers=%d q=%d c=%d e=%d mem=%s',
-          this.searchImpList.length,
-          query.length,
-          searchCategories?.length || 0,
-          searchEngines?.length || 0,
-          getMemorySnapshot(),
-        );
-      }
-    } catch {}
-
-    for (const impl of this.searchImpList) {
-      try {
-        if (log.enabled) {
-          log(
-            'webSearch:impl impl=%s mem=%s',
-            impl.constructor.name || 'UnknownSearchImpl',
-            getMemorySnapshot(),
-          );
-        }
-      } catch {}
-
-      let data = await this.queryWithImpl(impl, query, {
+    for (const impl of this.searchImplInstances) {
+      let data = await impl.query(query, {
         searchCategories,
         searchEngines,
         searchTimeRange,
@@ -193,7 +183,7 @@ export class SearchService {
 
       // First retry: remove search engine restrictions if no results found
       if (data.results.length === 0 && searchEngines && searchEngines?.length > 0) {
-        data = await this.queryWithImpl(impl, query, {
+        data = await impl.query(query, {
           searchCategories,
           searchEngines: undefined,
           searchTimeRange,
@@ -202,7 +192,7 @@ export class SearchService {
 
       // Second retry: remove all restrictions if still no results found
       if (data.results.length === 0) {
-        data = await this.queryWithImpl(impl, query);
+        data = await impl.query(query);
       }
 
       // If this provider returned results, use them
