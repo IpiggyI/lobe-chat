@@ -19,6 +19,8 @@ import { WebBrowsingManifest } from '@lobechat/builtin-tool-web-browsing';
 import { isDesktop } from '@lobechat/const';
 import { type LobeBuiltinTool } from '@lobechat/types';
 
+export { filterDisabledToolIds } from './utils';
+
 /**
  * Default tool IDs that will always be added to the tools list.
  * Shared between frontend (createAgentToolsEngine) and server (createServerAgentToolsEngine).

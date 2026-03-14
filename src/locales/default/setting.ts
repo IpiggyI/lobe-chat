@@ -668,6 +668,20 @@ export default {
   'settingSystemTools.tools.npm.desc': 'npm - Node.js package manager for installing dependencies',
   'settingSystemTools.tools.python.desc': 'Python - programming language runtime',
   'settingSystemTools.tools.rg.desc': 'ripgrep - extremely fast text search tool',
+
+  'settingSystemToolsRuntime.desc':
+    'Toggle runtime helper tools that the assistant uses automatically. Disabling unused tools can reduce overhead and simplify responses.',
+  'settingSystemToolsRuntime.title': 'Assistant Runtime',
+  'settingSystemToolsRuntime.tools.lobe-skill-store.desc':
+    'Allows the assistant to search and import skills from the LobeHub Market',
+  'settingSystemToolsRuntime.tools.lobe-skill-store.title': 'Skill Store',
+  'settingSystemToolsRuntime.tools.lobe-skills.desc':
+    'Allows the assistant to activate and execute reusable skill packages',
+  'settingSystemToolsRuntime.tools.lobe-skills.title': 'Skills',
+  'settingSystemToolsRuntime.tools.lobe-tools.desc':
+    'Allows the assistant to discover and activate additional tools on demand',
+  'settingSystemToolsRuntime.tools.lobe-tools.title': 'Tool Discovery',
+
   'settingTTS.openai.sttModel': 'OpenAI Speech-to-Text Model',
   'settingTTS.openai.title': 'OpenAI',
   'settingTTS.openai.ttsModel': 'OpenAI Text-to-Speech Model',

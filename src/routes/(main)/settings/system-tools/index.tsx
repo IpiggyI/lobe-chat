@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 
 import SettingHeader from '@/routes/(main)/settings/features/SettingHeader';
 
+import RuntimeToolsSection from './features/RuntimeToolsSection';
 import ToolDetectorSection from './features/ToolDetectorSection';
 
 const Page = () => {
@@ -10,6 +11,7 @@ const Page = () => {
     <>
       <SettingHeader title={t('tab.systemTools')} />
       <ToolDetectorSection />
+      <RuntimeToolsSection />
     </>
   );
 };

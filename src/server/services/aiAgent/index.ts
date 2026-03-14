@@ -329,9 +329,10 @@ export class AiAgentService {
     }
     log('execAgent: got %d klavis manifests', klavisManifests.length);
 
-    // 8. Fetch user settings (memory config + timezone)
+    // 8. Fetch user settings (memory config + timezone + disabled builtin tools)
     let globalMemoryEnabled = false;
     let userTimezone: string | undefined;
+    let disabledBuiltinToolIds: string[] = [];
     try {
       const userModel = new UserModel(this.db, this.userId);
       const settings = await userModel.getUserSettings();
@@ -339,13 +340,16 @@ export class AiAgentService {
       globalMemoryEnabled = memorySettings?.enabled !== false;
       const generalSettings = settings?.general as { timezone?: string } | undefined;
       userTimezone = generalSettings?.timezone;
+      const toolSettings = settings?.tool as { uninstalledBuiltinTools?: string[] } | undefined;
+      disabledBuiltinToolIds = toolSettings?.uninstalledBuiltinTools ?? [];
     } catch (error) {
       log('execAgent: failed to fetch user settings: %O', error);
     }
     log(
-      'execAgent: globalMemoryEnabled=%s, timezone=%s',
+      'execAgent: globalMemoryEnabled=%s, timezone=%s, disabledBuiltinTools=%d',
       globalMemoryEnabled,
       userTimezone ?? 'default',
+      disabledBuiltinToolIds.length,
     );
 
     // 9. Create tools using Server AgentToolsEngine
@@ -388,6 +392,7 @@ export class AiAgentService {
       deviceContext: gatewayConfigured
         ? { boundDeviceId, deviceOnline, gatewayConfigured: true }
         : undefined,
+      disabledBuiltinToolIds,
       globalMemoryEnabled,
       hasEnabledKnowledgeBases,
       model,
@@ -417,12 +422,13 @@ export class AiAgentService {
 
     log('execAgent: enabled tool ids: %O', toolsResult.enabledToolIds);
 
-    // Get manifest map and convert from Map to Record
-    const manifestMap = toolsEngine.getEnabledPluginManifests(pluginIds);
+    // Build manifest map from enabledManifests (respects enableChecker rules)
+    // NOTE: Previously used toolsEngine.getEnabledPluginManifests() which bypasses enableChecker,
+    // causing disabled tools' system prompt instructions to leak through.
     const toolManifestMap: Record<string, any> = {};
-    manifestMap.forEach((manifest, id) => {
-      toolManifestMap[id] = manifest;
-    });
+    for (const manifest of toolsResult.enabledManifests) {
+      toolManifestMap[manifest.identifier] = manifest;
+    }
 
     // Build toolSourceMap for routing tool execution
     const toolSourceMap: Record<string, 'builtin' | 'plugin' | 'mcp' | 'klavis' | 'lobehubSkill'> =
@@ -536,18 +542,21 @@ export class AiAgentService {
       }
 
       // Build availablePlugins from all plugin sources
-      // Exclude only truly internal tools (agent-management itself, agent-builder, page-agent)
+      // Exclude internal tools and user-disabled builtin tools
       const INTERNAL_TOOLS = new Set([
         'lobe-agent-management', // Don't show agent-management in its own context
         'lobe-agent-builder', // Used for editing current agent, not for creating new agents
         'lobe-group-agent-builder', // Used for editing current group, not for creating new agents
         'lobe-page-agent', // Page-editor specific tool
       ]);
+      const disabledSet = new Set(disabledBuiltinToolIds);
 
       const availablePlugins = [
-        // All builtin tools (including hidden ones like web-browsing, cloud-sandbox)
+        // All builtin tools (excluding internal and user-disabled ones)
         ...builtinTools
-          .filter((tool) => !INTERNAL_TOOLS.has(tool.identifier))
+          .filter(
+            (tool) => !INTERNAL_TOOLS.has(tool.identifier) && !disabledSet.has(tool.identifier),
+          )
           .map((tool) => ({
             description: tool.manifest.meta?.description,
             identifier: tool.identifier,

@@ -44,6 +44,8 @@ export interface ServerCreateAgentToolsEngineParams {
     /** Plugin IDs enabled for this agent */
     plugins?: string[];
   };
+  /** Builtin tool IDs that the user has globally disabled */
+  disabledBuiltinToolIds?: string[];
   /** Device gateway context for remote tool calling */
   deviceContext?: {
     boundDeviceId?: string;

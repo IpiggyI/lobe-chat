@@ -15,7 +15,12 @@ import { LocalSystemManifest } from '@lobechat/builtin-tool-local-system';
 import { MemoryManifest } from '@lobechat/builtin-tool-memory';
 import { RemoteDeviceManifest } from '@lobechat/builtin-tool-remote-device';
 import { WebBrowsingManifest } from '@lobechat/builtin-tool-web-browsing';
-import { alwaysOnToolIds, builtinTools, defaultToolIds } from '@lobechat/builtin-tools';
+import {
+  alwaysOnToolIds,
+  builtinTools,
+  defaultToolIds,
+  filterDisabledToolIds,
+} from '@lobechat/builtin-tools';
 import { createEnableChecker, type LobeToolManifest } from '@lobechat/context-engine';
 import { ToolsEngine } from '@lobechat/context-engine';
 import debug from 'debug';
@@ -93,6 +98,7 @@ export const createServerAgentToolsEngine = (
     additionalManifests,
     agentConfig,
     deviceContext,
+    disabledBuiltinToolIds = [],
     globalMemoryEnabled = false,
     hasEnabledKnowledgeBases = false,
     model,
@@ -108,27 +114,32 @@ export const createServerAgentToolsEngine = (
     agentConfig.chatConfig?.runtimeEnv?.runtimeMode?.[platform] ??
     (isDesktopClient ? 'local' : 'none');
 
+  // Filter out globally disabled builtin tools
+  const enabledDefaultToolIds = filterDisabledToolIds(defaultToolIds, disabledBuiltinToolIds);
+  const effectiveAlwaysOnToolIds = filterDisabledToolIds(alwaysOnToolIds, disabledBuiltinToolIds);
+
   log(
-    'Creating agent tools engine for model=%s, provider=%s, searchMode=%s, runtimeMode=%s, additionalManifests=%d, deviceGateway=%s',
+    'Creating agent tools engine for model=%s, provider=%s, searchMode=%s, runtimeMode=%s, additionalManifests=%d, deviceGateway=%s, disabledBuiltinTools=%d',
     model,
     provider,
     searchMode,
     runtimeMode,
     additionalManifests?.length ?? 0,
     !!deviceContext?.gatewayConfigured,
+    disabledBuiltinToolIds.length,
   );
 
   return createServerToolsEngine(context, {
     // Pass additional manifests (e.g., LobeHub Skills)
     additionalManifests,
-    // Add default tools based on configuration
-    defaultToolIds,
+    // Add default tools based on configuration (with disabled tools filtered out)
+    defaultToolIds: enabledDefaultToolIds,
     enableChecker: createEnableChecker({
       rules: {
         // User-selected plugins
         ...Object.fromEntries((agentConfig.plugins ?? []).map((id) => [id, true])),
-        // Always-on builtin tools
-        ...Object.fromEntries(alwaysOnToolIds.map((id) => [id, true])),
+        // Always-on builtin tools (with disabled tools filtered out)
+        ...Object.fromEntries(effectiveAlwaysOnToolIds.map((id) => [id, true])),
         // System-level rules (may override user selection for specific tools)
         [CloudSandboxManifest.identifier]: runtimeMode === 'cloud',
         [KnowledgeBaseManifest.identifier]: hasEnabledKnowledgeBases,

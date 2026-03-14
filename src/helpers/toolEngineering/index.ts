@@ -6,7 +6,7 @@ import { KnowledgeBaseManifest } from '@lobechat/builtin-tool-knowledge-base';
 import { LocalSystemManifest } from '@lobechat/builtin-tool-local-system';
 import { MemoryManifest } from '@lobechat/builtin-tool-memory';
 import { WebBrowsingManifest } from '@lobechat/builtin-tool-web-browsing';
-import { alwaysOnToolIds, defaultToolIds } from '@lobechat/builtin-tools';
+import { alwaysOnToolIds, defaultToolIds, filterDisabledToolIds } from '@lobechat/builtin-tools';
 import { createEnableChecker, type PluginEnableChecker } from '@lobechat/context-engine';
 import { ToolsEngine } from '@lobechat/context-engine';
 import { type ChatCompletionTool, type WorkingModel } from '@lobechat/types';
@@ -91,8 +91,14 @@ export const createAgentToolsEngine = (
   const agentState = getAgentStoreState();
   const userPlugins = agentSelectors.currentAgentPlugins(agentState);
 
+  // Filter out globally disabled builtin tools
+  const toolStoreState = getToolStoreState();
+  const disabledIds = toolStoreState.uninstalledBuiltinTools ?? [];
+  const enabledDefaultToolIds = filterDisabledToolIds(defaultToolIds, disabledIds);
+  const effectiveAlwaysOnToolIds = filterDisabledToolIds(alwaysOnToolIds, disabledIds);
+
   return createToolsEngine({
-    defaultToolIds,
+    defaultToolIds: enabledDefaultToolIds,
     enableChecker: createEnableChecker({
       allowExplicitActivation: true,
       platformFilter: ({ pluginId }) => {
@@ -115,8 +121,8 @@ export const createAgentToolsEngine = (
         ...(pluginIds && Object.fromEntries(pluginIds.map((id) => [id, true]))),
         // User-selected plugins (from the active agent)
         ...Object.fromEntries(userPlugins.map((id) => [id, true])),
-        // Always-on builtin tools
-        ...Object.fromEntries(alwaysOnToolIds.map((id) => [id, true])),
+        // Always-on builtin tools (filtered by global toggle)
+        ...Object.fromEntries(effectiveAlwaysOnToolIds.map((id) => [id, true])),
         // System-level rules (may override user selection for specific tools)
         [CloudSandboxManifest.identifier]:
           agentChatConfigSelectors.isCloudSandboxEnabled(agentState),

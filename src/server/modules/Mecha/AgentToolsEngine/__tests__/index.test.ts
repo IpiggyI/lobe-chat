@@ -3,6 +3,9 @@ import { KnowledgeBaseManifest } from '@lobechat/builtin-tool-knowledge-base';
 import { LocalSystemManifest } from '@lobechat/builtin-tool-local-system';
 import { MemoryManifest } from '@lobechat/builtin-tool-memory';
 import { RemoteDeviceManifest } from '@lobechat/builtin-tool-remote-device';
+import { SkillStoreManifest } from '@lobechat/builtin-tool-skill-store';
+import { SkillsManifest } from '@lobechat/builtin-tool-skills';
+import { LobeToolsManifest } from '@lobechat/builtin-tool-tools';
 import { WebBrowsingManifest } from '@lobechat/builtin-tool-web-browsing';
 import { builtinTools } from '@lobechat/builtin-tools';
 import { ToolsEngine } from '@lobechat/context-engine';
@@ -417,6 +420,147 @@ describe('createServerAgentToolsEngine', () => {
       });
 
       expect(result.enabledToolIds).not.toContain(RemoteDeviceManifest.identifier);
+    });
+  });
+
+  describe('disabledBuiltinToolIds filtering', () => {
+    it('should exclude disabled tool from enabledToolIds even though it is in defaultToolIds', () => {
+      const context = createMockContext();
+      const engine = createServerAgentToolsEngine(context, {
+        agentConfig: { plugins: [] },
+        disabledBuiltinToolIds: [LobeToolsManifest.identifier],
+        model: 'gpt-4',
+        provider: 'openai',
+      });
+
+      const result = engine.generateToolsDetailed({
+        toolIds: [],
+        model: 'gpt-4',
+        provider: 'openai',
+      });
+
+      expect(result.enabledToolIds).not.toContain(LobeToolsManifest.identifier);
+    });
+
+    it('should exclude disabled tool from enabledManifests', () => {
+      const context = createMockContext();
+      const engine = createServerAgentToolsEngine(context, {
+        agentConfig: { plugins: [] },
+        disabledBuiltinToolIds: [SkillsManifest.identifier],
+        model: 'gpt-4',
+        provider: 'openai',
+      });
+
+      const result = engine.generateToolsDetailed({
+        toolIds: [],
+        model: 'gpt-4',
+        provider: 'openai',
+      });
+
+      const manifestIds = result.enabledManifests.map((m) => m.identifier);
+      expect(manifestIds).not.toContain(SkillsManifest.identifier);
+    });
+
+    it('should reject disabled alwaysOnToolIds even when agent explicitly lists them', () => {
+      const context = createMockContext();
+      const engine = createServerAgentToolsEngine(context, {
+        agentConfig: { plugins: [LobeToolsManifest.identifier, SkillsManifest.identifier] },
+        disabledBuiltinToolIds: [LobeToolsManifest.identifier, SkillsManifest.identifier],
+        model: 'gpt-4',
+        provider: 'openai',
+      });
+
+      const result = engine.generateToolsDetailed({
+        toolIds: [LobeToolsManifest.identifier, SkillsManifest.identifier],
+        model: 'gpt-4',
+        provider: 'openai',
+      });
+
+      expect(result.enabledToolIds).not.toContain(LobeToolsManifest.identifier);
+      expect(result.enabledToolIds).not.toContain(SkillsManifest.identifier);
+    });
+
+    it('should not affect non-disabled default tools', () => {
+      const context = createMockContext();
+      const engine = createServerAgentToolsEngine(context, {
+        agentConfig: {
+          chatConfig: { searchMode: 'on' },
+          plugins: [],
+        },
+        disabledBuiltinToolIds: [LobeToolsManifest.identifier],
+        model: 'gpt-4',
+        provider: 'openai',
+      });
+
+      const result = engine.generateToolsDetailed({
+        toolIds: [],
+        model: 'gpt-4',
+        provider: 'openai',
+      });
+
+      // lobe-tools disabled, but web-browsing should still be present
+      expect(result.enabledToolIds).not.toContain(LobeToolsManifest.identifier);
+      expect(result.enabledToolIds).toContain(WebBrowsingManifest.identifier);
+    });
+
+    it('should behave identically to default when disabledBuiltinToolIds is empty', () => {
+      const context = createMockContext();
+
+      const engineDefault = createServerAgentToolsEngine(context, {
+        agentConfig: { plugins: ['test-plugin'] },
+        model: 'gpt-4',
+        provider: 'openai',
+      });
+
+      const engineExplicitEmpty = createServerAgentToolsEngine(context, {
+        agentConfig: { plugins: ['test-plugin'] },
+        disabledBuiltinToolIds: [],
+        model: 'gpt-4',
+        provider: 'openai',
+      });
+
+      const resultDefault = engineDefault.generateToolsDetailed({
+        toolIds: ['test-plugin'],
+        model: 'gpt-4',
+        provider: 'openai',
+      });
+
+      const resultEmpty = engineExplicitEmpty.generateToolsDetailed({
+        toolIds: ['test-plugin'],
+        model: 'gpt-4',
+        provider: 'openai',
+      });
+
+      expect(resultDefault.enabledToolIds.sort()).toEqual(resultEmpty.enabledToolIds.sort());
+    });
+
+    it('should disable all three runtime tools when all are in disabledBuiltinToolIds', () => {
+      const context = createMockContext();
+      const engine = createServerAgentToolsEngine(context, {
+        agentConfig: { plugins: [] },
+        disabledBuiltinToolIds: [
+          LobeToolsManifest.identifier,
+          SkillsManifest.identifier,
+          SkillStoreManifest.identifier,
+        ],
+        model: 'gpt-4',
+        provider: 'openai',
+      });
+
+      const result = engine.generateToolsDetailed({
+        toolIds: [],
+        model: 'gpt-4',
+        provider: 'openai',
+      });
+
+      expect(result.enabledToolIds).not.toContain(LobeToolsManifest.identifier);
+      expect(result.enabledToolIds).not.toContain(SkillsManifest.identifier);
+      expect(result.enabledToolIds).not.toContain(SkillStoreManifest.identifier);
+
+      const manifestIds = result.enabledManifests.map((m) => m.identifier);
+      expect(manifestIds).not.toContain(LobeToolsManifest.identifier);
+      expect(manifestIds).not.toContain(SkillsManifest.identifier);
+      expect(manifestIds).not.toContain(SkillStoreManifest.identifier);
     });
   });
 });
