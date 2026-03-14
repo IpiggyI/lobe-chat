@@ -1,3 +1,4 @@
+import { isDesktop } from '@lobechat/const';
 import { useTranslation } from 'react-i18next';
 
 import SettingHeader from '@/routes/(main)/settings/features/SettingHeader';
@@ -6,6 +7,7 @@ import { userGeneralSettingsSelectors } from '@/store/user/slices/settings/selec
 
 import AppEnvironmentSection from './features/AppEnvironmentSection';
 import CliTestSection from './features/CliTestSection';
+import RuntimeToolsSection from './features/RuntimeToolsSection';
 import ToolDetectorSection from './features/ToolDetectorSection';
 
 const Page = () => {
@@ -15,7 +17,8 @@ const Page = () => {
   return (
     <>
       <SettingHeader title={t('tab.systemTools')} />
-      <ToolDetectorSection />
+      <RuntimeToolsSection />
+      {isDesktop && <ToolDetectorSection />}
       <AppEnvironmentSection />
       {isDevMode ? <CliTestSection /> : null}
     </>

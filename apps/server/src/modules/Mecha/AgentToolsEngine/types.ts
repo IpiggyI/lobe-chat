@@ -106,6 +106,8 @@ export interface ServerCreateAgentToolsEngineParams {
   };
   /** Whether to suppress the local-system builtin while preserving other tools. */
   disableLocalSystem?: boolean;
+  /** Builtin tool IDs that the user has globally disabled */
+  disabledBuiltinToolIds?: string[];
   /**
    * The run's resolved execution plan (see `resolveExecutionPlan`). When
    * provided, its effective `target` drives the runtime tool gate; when

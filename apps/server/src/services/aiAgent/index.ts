@@ -1949,7 +1949,7 @@ export class AiAgentService {
       };
     }
 
-    // 4. Fetch user settings (memory config + timezone)
+    // 4. Fetch user settings (memory config + timezone + disabled builtin tools)
     // Agent-level memory config takes priority; fallback to user-level setting
     const agentMemoryEnabled = agentConfig.chatConfig?.memory?.enabled;
     let globalMemoryEnabled = agentMemoryEnabled ?? false;
@@ -1957,6 +1957,7 @@ export class AiAgentService {
     // Resolved once below (alongside the group-tool authorization fetch) and
     // forwarded into op metadata for the per-step context engine.
     let operationAgentGroup: AgentGroupConfig | undefined;
+    let disabledBuiltinToolIds: string[] = [];
     try {
       const userModel = new UserModel(this.db, this.userId);
       const settings = await userModel.getUserSettings();
@@ -1966,13 +1967,16 @@ export class AiAgentService {
 
       const generalSettings = settings?.general as { timezone?: string } | undefined;
       userTimezone = generalSettings?.timezone;
+      const toolSettings = settings?.tool as { uninstalledBuiltinTools?: string[] } | undefined;
+      disabledBuiltinToolIds = toolSettings?.uninstalledBuiltinTools ?? [];
     } catch (error) {
       log('execAgent: failed to fetch user settings: %O', error);
     }
     log(
-      'execAgent: globalMemoryEnabled=%s, timezone=%s',
+      'execAgent: globalMemoryEnabled=%s, timezone=%s, disabledBuiltinTools=%d',
       globalMemoryEnabled,
       userTimezone ?? 'default',
+      disabledBuiltinToolIds.length,
     );
 
     // 5. Tool discovery — short-circuit when disableTools is set
@@ -2355,6 +2359,7 @@ export class AiAgentService {
           plugins: agentPlugins,
         },
         canUseDevice,
+        disabledBuiltinToolIds,
         deviceContext: gatewayConfigured
           ? {
               autoActivated: activeDeviceId ? true : undefined,

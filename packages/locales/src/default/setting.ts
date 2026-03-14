@@ -899,7 +899,20 @@ export default {
   'settingSystemTools.tools.python.desc': 'Python - programming language runtime',
   'settingSystemTools.tools.qwen.desc': 'Qwen Code - Alibaba Qwen agentic coding CLI',
   'settingSystemTools.tools.rg.desc': 'ripgrep - extremely fast text search tool',
-  'settingSystemTools.tools.uv.desc': 'uv - extremely fast Python package manager',
+
+  'settingSystemTools.runtime.desc':
+    'Disable runtime helper tools to reduce system prompt and function schema overhead. Disabling them may reduce advanced tool and skill capabilities.',
+  'settingSystemTools.runtime.skillStore.desc':
+    'Provides skill marketplace discovery and installation capabilities',
+  'settingSystemTools.runtime.skillStore.title': 'Skill Store',
+  'settingSystemTools.runtime.skills.desc':
+    'Provides skill activation, reference reading, and script execution capabilities',
+  'settingSystemTools.runtime.skills.title': 'Skills',
+  'settingSystemTools.runtime.title': 'Assistant Runtime',
+  'settingSystemTools.runtime.toolDiscovery.desc':
+    'Provides dynamic tool activation and available tools prompt injection',
+  'settingSystemTools.runtime.toolDiscovery.title': 'Tool Discovery',
+
   'settingTTS.openai.sttModel': 'OpenAI Speech-to-Text Model',
   'settingTTS.openai.title': 'OpenAI',
   'settingTTS.openai.ttsModel': 'OpenAI Text-to-Speech Model',

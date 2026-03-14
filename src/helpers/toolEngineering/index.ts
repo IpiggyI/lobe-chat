@@ -205,24 +205,31 @@ export const createAgentToolsEngine = (
     [WebBrowsingManifest.identifier]: webBrowsingEnabled,
   };
 
+  // Filter default and always-on tool IDs by user's disabled builtin tools
+  const uninstalled = getToolStoreState().uninstalledBuiltinTools;
+  const enabledDefaultToolIds = defaultToolIds.filter((id) => !uninstalled.includes(id));
+  const effectiveAlwaysOnToolIds = alwaysOnToolIds.filter((id) => !uninstalled.includes(id));
+
   const agentModeRules = {
     // Runtime-resolved plugins (from agentConfigResolver for the effective agent,
     // may include sub-agent/group/page scope plugins not on the active agent)
     ...(pluginIds && Object.fromEntries(pluginIds.map((id) => [id, true]))),
     // User-selected plugins (from the active agent)
     ...Object.fromEntries(userPlugins.map((id) => [id, true])),
-    // Always-on builtin tools
-    ...Object.fromEntries(alwaysOnToolIds.map((id) => [id, true])),
+    // Always-on builtin tools (filtered by user's disabled list)
+    ...Object.fromEntries(effectiveAlwaysOnToolIds.map((id) => [id, true])),
     // System-level rules (may override user selection for specific tools)
     [CloudSandboxManifest.identifier]: agentChatConfigSelectors.isCloudSandboxEnabled(agentState),
     [KnowledgeBaseManifest.identifier]: kbEnabled,
     [LocalSystemManifest.identifier]: agentChatConfigSelectors.isLocalSystemEnabled(agentState),
     [MemoryManifest.identifier]: memoryEnabled,
     [WebBrowsingManifest.identifier]: webBrowsingEnabled,
+    // Global disable overrides all above (must be last to take precedence)
+    ...Object.fromEntries(uninstalled.map((id) => [id, false])),
   };
 
   return createToolsEngine({
-    defaultToolIds: isChatMode ? chatModeAllowedToolIds : defaultToolIds,
+    defaultToolIds: isChatMode ? chatModeAllowedToolIds : enabledDefaultToolIds,
     manifestContext,
     enableChecker: createEnableChecker({
       allowExplicitActivation: !isChatMode,
