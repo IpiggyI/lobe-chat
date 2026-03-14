@@ -85,6 +85,8 @@ export interface ServerCreateAgentToolsEngineParams {
   };
   /** Whether to suppress the local-system builtin while preserving other tools. */
   disableLocalSystem?: boolean;
+  /** Builtin tool IDs that the user has globally disabled */
+  disabledBuiltinToolIds?: string[];
   /** Whether the user's global memory setting is enabled */
   globalMemoryEnabled?: boolean;
   /** Whether agent has agent documents */

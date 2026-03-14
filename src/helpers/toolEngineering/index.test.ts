@@ -93,6 +93,7 @@ vi.mock('@/store/tool', () => ({
         type: 'builtin' as const,
       },
     ],
+    uninstalledBuiltinTools: [],
   }),
 }));
 

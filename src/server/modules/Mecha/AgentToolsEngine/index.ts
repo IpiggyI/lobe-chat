@@ -128,6 +128,7 @@ export const createServerAgentToolsEngine = (
     canUseDevice = false,
     deviceContext,
     disableLocalSystem = false,
+    disabledBuiltinToolIds = [],
     globalMemoryEnabled = false,
     hasAgentDocuments = false,
     hasEnabledKnowledgeBases = false,
@@ -158,8 +159,13 @@ export const createServerAgentToolsEngine = (
   const isSearchEnabled = searchMode !== 'off';
   const isChatMode = agentConfig.chatConfig?.enableAgentMode === false;
 
+  // Filter default and always-on tool IDs by user's disabled builtin tools
+  const disabledSet = new Set(disabledBuiltinToolIds);
+  const enabledDefaultToolIds = defaultToolIds.filter((id) => !disabledSet.has(id));
+  const effectiveAlwaysOnToolIds = alwaysOnToolIds.filter((id) => !disabledSet.has(id));
+
   log(
-    'Creating agent tools engine model=%s provider=%s searchMode=%s platform=%s runtimeMode=%s additionalManifests=%d hasDeviceProxy=%s canUseDevice=%s isChatMode=%s',
+    'Creating agent tools engine model=%s provider=%s searchMode=%s platform=%s runtimeMode=%s additionalManifests=%d hasDeviceProxy=%s canUseDevice=%s isChatMode=%s disabledBuiltinTools=%d',
     model,
     provider,
     searchMode,
@@ -169,6 +175,7 @@ export const createServerAgentToolsEngine = (
     hasDeviceProxy,
     canUseDevice,
     isChatMode,
+    disabledBuiltinToolIds.length,
   );
 
   // Chat mode: strict outer whitelist. Drop user plugins, alwaysOn tools, and
@@ -185,8 +192,8 @@ export const createServerAgentToolsEngine = (
   const agentModeRules = {
     // User-selected plugins
     ...Object.fromEntries((agentConfig.plugins ?? []).map((id) => [id, true])),
-    // Always-on builtin tools
-    ...Object.fromEntries(alwaysOnToolIds.map((id) => [id, true])),
+    // Always-on builtin tools (filtered by user's disabled list)
+    ...Object.fromEntries(effectiveAlwaysOnToolIds.map((id) => [id, true])),
     // System-level rules (may override user selection for specific tools)
     [CloudSandboxManifest.identifier]: runtimeMode === 'cloud',
     [KnowledgeBaseManifest.identifier]: hasEnabledKnowledgeBases,
@@ -217,6 +224,8 @@ export const createServerAgentToolsEngine = (
       canUseDevice && hasDeviceProxy && !deviceContext?.autoActivated,
     [AgentDocumentsManifest.identifier]: hasAgentDocuments,
     [WebBrowsingManifest.identifier]: isSearchEnabled,
+    // Global disable overrides all above (must be last to take precedence)
+    ...Object.fromEntries(disabledBuiltinToolIds.map((id) => [id, false])),
   };
 
   return createServerToolsEngine(context, {
@@ -227,8 +236,8 @@ export const createServerAgentToolsEngine = (
     // activation could resolve the manifest and bypass the rule-layer
     // gates below ().
     builtinTools: buildAllowedBuiltinTools({ canUseDevice, disableLocalSystem }),
-    // Add default tools based on configuration
-    defaultToolIds: isChatMode ? chatModeAllowedToolIds : defaultToolIds,
+    // Add default tools based on configuration (filtered by user's disabled list)
+    defaultToolIds: isChatMode ? chatModeAllowedToolIds : enabledDefaultToolIds,
     // Post-merge wall: a plugin or Skill/Klavis manifest claiming a
     // device identifier survives `buildAllowedBuiltinTools` (which only
     // filters the builtin source). Excluding the identifiers here drops
