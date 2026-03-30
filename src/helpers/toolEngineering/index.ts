@@ -24,6 +24,8 @@ import { getAgentStoreState } from '@/store/agent';
 import { agentChatConfigSelectors, agentSelectors } from '@/store/agent/selectors';
 import { getToolStoreState } from '@/store/tool';
 import {
+  agentSkillsSelectors,
+  builtinToolSelectors,
   composioStoreSelectors,
   lobehubSkillStoreSelectors,
   pluginSelectors,
@@ -260,6 +262,21 @@ export const createAgentToolsEngine = (
  * @param provider - Provider name for function calling compatibility check (optional)
  * @returns Array of ChatCompletionTool objects
  */
+/**
+ * Detect if pluginIds contain any installed skill (builtin or agent-created).
+ * Used in manual mode to decide whether to bridge lobe-skills back.
+ */
+export const detectExplicitSkills = (pluginIds: string[]): boolean => {
+  const toolState = getToolStoreState();
+
+  const installedSkillIds = new Set([
+    ...builtinToolSelectors.installedBuiltinSkills(toolState).map((s) => s.identifier),
+    ...agentSkillsSelectors.getAgentSkills(toolState).map((s) => s.identifier),
+  ]);
+
+  return pluginIds.some((id) => installedSkillIds.has(id));
+};
+
 export const getEnabledTools = (
   toolIds: string[] = [],
   model: string,

@@ -14,6 +14,7 @@ import {
 import { LobeAgentManifest } from '@lobechat/builtin-tool-lobe-agent';
 import { createPathScopeAudit } from '@lobechat/builtin-tool-local-system';
 import { PageAgentIdentifier } from '@lobechat/builtin-tool-page-agent';
+import { SkillsIdentifier } from '@lobechat/builtin-tool-skills';
 import { manualModeExcludeToolIds } from '@lobechat/builtin-tools';
 import { isDesktop } from '@lobechat/const';
 import { type ToolsEngine } from '@lobechat/context-engine';
@@ -27,7 +28,7 @@ import {
 } from '@lobechat/types';
 import debug from 'debug';
 
-import { createAgentToolsEngine } from '@/helpers/toolEngineering';
+import { createAgentToolsEngine, detectExplicitSkills } from '@/helpers/toolEngineering';
 import { aiAgentService } from '@/services/aiAgent';
 import { isCanUseVideo, isCanUseVision } from '@/services/chat/helper';
 import { type ResolvedAgentConfig } from '@/services/chat/mecha';
@@ -224,12 +225,23 @@ export class StreamingExecutorActionImpl {
       { isSubAgent, scope },
     );
     // When skillActivateMode is 'manual':
-    // Exclude only discovery tools (activator, skill-store) so runtime-managed defaults
-    // (skills, web-browsing, sandbox, memory, etc.) remain available for all agents.
+    // - Builtin agents: leave default behavior intact (they define their own precise tool set)
+    // - Regular agents: exclude discovery tools (activator, skill-store), plus conditionally
+    //   exclude lobe-skills via smart bridge (keep lobe-skills only when user explicitly
+    //   selected skills). Runtime-managed defaults (web-browsing, sandbox, memory, etc.)
+    //   remain available regardless.
     const isManualMode = agentConfig.chatConfig?.skillActivateMode === 'manual';
+    const hasExplicitSkills = isManualMode && detectExplicitSkills(mergedToolIds || []);
+
+    const excludeDefaultToolIds =
+      isManualMode && !agentConfig.isBuiltinAgent
+        ? hasExplicitSkills
+          ? manualModeExcludeToolIds // bridge: keep lobe-skills for selected skills
+          : [...manualModeExcludeToolIds, SkillsIdentifier] // pure mode: also exclude lobe-skills
+        : undefined;
 
     const toolsDetailed = toolsEngine.generateToolsDetailed({
-      excludeDefaultToolIds: isManualMode ? manualModeExcludeToolIds : undefined,
+      excludeDefaultToolIds,
       model: agentConfigData.model,
       provider: agentConfigData.provider!,
       skipDefaultTools: disableTools || undefined,

@@ -7,7 +7,10 @@ import numeral from 'numeral';
 import { memo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { createAgentToolsEngine } from '@/helpers/toolEngineering';
+import { SkillsIdentifier } from '@lobechat/builtin-tool-skills';
+import { manualModeExcludeToolIds } from '@lobechat/builtin-tools';
+
+import { createAgentToolsEngine, detectExplicitSkills } from '@/helpers/toolEngineering';
 import { useModelContextWindowTokens } from '@/hooks/useModelContextWindowTokens';
 import { useModelSupportToolUse } from '@/hooks/useModelSupportToolUse';
 import { useTokenCount } from '@/hooks/useTokenCount';
@@ -100,6 +103,9 @@ const Token = memo(() => {
   // Tool usage token
   const canUseTool = useModelSupportToolUse(model, provider);
   const pluginIds = useAgentStore((s) => agentByIdSelectors.getAgentPluginsById(agentId)(s));
+  const skillActivateMode = useAgentStore((s) =>
+    chatConfigByIdSelectors.getSkillActivateModeById(agentId)(s),
+  );
 
   const toolsString = useToolStore(
     useCallback(() => {

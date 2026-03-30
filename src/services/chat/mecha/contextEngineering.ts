@@ -12,6 +12,7 @@ import {
 import { GroupAgentBuilderIdentifier } from '@lobechat/builtin-tool-group-agent-builder';
 import { LobeAgentIdentifier } from '@lobechat/builtin-tool-lobe-agent';
 import { PageAgentIdentifier } from '@lobechat/builtin-tool-page-agent';
+import { SkillsIdentifier } from '@lobechat/builtin-tool-skills';
 import { WebOnboardingIdentifier } from '@lobechat/builtin-tool-web-onboarding';
 import {
   AGENT_PLAN_FILE_TYPE,
@@ -650,10 +651,13 @@ export const contextEngineering = async ({
   }
 
   // Resolve enabled skills (await: pinned DB skills fetch their content on demand).
+  // Gate: only inject skill prompts when the lobe-skills runtime is in the active
+  // tools list (fork token-saving optimization — avoids injecting prompts when the
+  // AI can't activate skills).
   // In auto mode: expose all installed skills so the AI can discover and activate them.
   // In manual mode: only expose user-selected skills (filtered by pluginIds).
   let enabledSkills: OperationSkillSet['skills'] | undefined;
-  if (plugins) {
+  if (plugins && tools?.includes(SkillsIdentifier)) {
     const skillSet = await resolveClientSkills(plugins);
     if (isInAutoSkillMode) {
       enabledSkills = skillSet.skills;
@@ -711,7 +715,7 @@ export const contextEngineering = async ({
     // agent-document injectors when this is `false` (chat mode).
     enableAgentMode: agentChatConfigSelectors.currentChatConfig(agentStoreState).enableAgentMode,
 
-    // Skills configuration (resolved above)
+    // Skills configuration (resolved above; gated by lobe-skills being in the active tools list)
     skillsConfig: {
       enabledSkills,
     },
