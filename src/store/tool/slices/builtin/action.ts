@@ -109,13 +109,15 @@ export class BuiltinToolActionImpl {
     if (!this.#get().uninstalledBuiltinToolsLoading) return;
 
     const userState = await userService.getUserState();
-    const userUninstalled = userState?.settings?.tool?.uninstalledBuiltinTools;
+    const toolSettings = userState?.settings?.tool;
+    const userUninstalled = toolSettings?.uninstalledBuiltinTools;
 
     this.#set(
       {
         uninstalledBuiltinTools:
           userUninstalled === undefined ? defaultUninstalledBuiltinTools : userUninstalled,
         uninstalledBuiltinToolsLoading: false,
+        userSkillActivateMode: toolSettings?.skillActivateMode,
       },
       false,
       n('ensureUninstalledToolsLoaded'),
@@ -180,12 +182,28 @@ export class BuiltinToolActionImpl {
   /**
    * SWR hook to fetch uninstalled builtin tools
    */
+  /**
+   * Update user-level skill activate mode default
+   */
+  updateUserSkillActivateMode = async (mode: 'auto' | 'manual'): Promise<void> => {
+    this.#set({ userSkillActivateMode: mode }, false, n('updateUserSkillActivateMode'));
+    await userService.updateUserSettings({ tool: { skillActivateMode: mode } });
+  };
+
   useFetchUninstalledBuiltinTools = (enabled: boolean): SWRResponse<string[]> => {
     return useSWR<string[]>(
       enabled ? UNINSTALLED_BUILTIN_TOOLS : null,
       async () => {
         const userState = await userService.getUserState();
-        const userUninstalled = userState?.settings?.tool?.uninstalledBuiltinTools;
+        const toolSettings = userState?.settings?.tool;
+        const userUninstalled = toolSettings?.uninstalledBuiltinTools;
+
+        // Sync userSkillActivateMode from the same response (no extra request)
+        this.#set(
+          { userSkillActivateMode: toolSettings?.skillActivateMode },
+          false,
+          n('syncUserSkillActivateMode'),
+        );
 
         // If user has never set their preference, use default (non-recommended tools are uninstalled)
         if (userUninstalled === undefined) return defaultUninstalledBuiltinTools;

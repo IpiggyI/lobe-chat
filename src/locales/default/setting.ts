@@ -861,6 +861,9 @@ export default {
   'settingSystemTools.tools.qwen.desc': 'Qwen Code - Alibaba Qwen agentic coding CLI',
   'settingSystemTools.tools.rg.desc': 'ripgrep - extremely fast text search tool',
 
+  'settingSystemTools.runtime.activateMode.desc':
+    'Controls whether runtime helper tools are injected by default. Manual mode only injects tools when you explicitly select them per-agent.',
+  'settingSystemTools.runtime.activateMode.title': 'Default Activate Mode',
   'settingSystemTools.runtime.desc':
     'Disable runtime helper tools to reduce system prompt and function schema overhead. Disabling them may reduce advanced tool and skill capabilities.',
   'settingSystemTools.runtime.skillStore.desc':
