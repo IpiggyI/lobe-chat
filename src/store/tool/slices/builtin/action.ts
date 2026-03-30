@@ -181,7 +181,11 @@ export class BuiltinToolActionImpl {
 
     // Optimistic update
     this.#set(
-      { uninstalledBuiltinTools: newUninstalled, uninstalledBuiltinToolsLoading: false },
+      {
+        uninstalledBuiltinTools: newUninstalled,
+        uninstalledBuiltinToolsLoading: false,
+        userSkillActivateMode: tool?.skillActivateMode,
+      },
       false,
       n(install ? 'installBuiltinTool' : 'uninstallBuiltinTool'),
     );
@@ -223,6 +227,14 @@ export class BuiltinToolActionImpl {
    * workspace keep independent caches; combined with the SPA's per-workspace
    * remount this revalidates automatically on workspace switch.
    */
+  /**
+   * Update user-level skill activate mode default
+   */
+  updateUserSkillActivateMode = async (mode: 'auto' | 'manual'): Promise<void> => {
+    this.#set({ userSkillActivateMode: mode }, false, n('updateUserSkillActivateMode'));
+    await userService.updateUserSettings({ tool: { skillActivateMode: mode } });
+  };
+
   useFetchUninstalledBuiltinTools = (enabled: boolean): SWRResponse<string[]> => {
     const workspaceId = useActiveWorkspaceId();
 
@@ -230,7 +242,16 @@ export class BuiltinToolActionImpl {
       enabled ? toolKeys.uninstalledBuiltins(workspaceId) : null,
       async () => {
         const userState = await userService.getUserState();
-        return resolveUninstalledBuiltinTools(userState?.settings?.tool, workspaceId);
+        const toolSettings = userState?.settings?.tool;
+
+        // Sync userSkillActivateMode from the same response (no extra request)
+        this.#set(
+          { userSkillActivateMode: toolSettings?.skillActivateMode },
+          false,
+          n('syncUserSkillActivateMode'),
+        );
+
+        return resolveUninstalledBuiltinTools(toolSettings, workspaceId);
       },
       {
         fallbackData: defaultUninstalledBuiltinTools,

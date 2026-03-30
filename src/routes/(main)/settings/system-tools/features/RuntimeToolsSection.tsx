@@ -4,8 +4,10 @@ import { LobeActivatorManifest } from '@lobechat/builtin-tool-activator';
 import { SkillStoreManifest } from '@lobechat/builtin-tool-skill-store';
 import { SkillsManifest } from '@lobechat/builtin-tool-skills';
 import { type FormGroupItemType } from '@lobehub/ui';
-import { Form } from '@lobehub/ui';
+import { Form, Icon, Segmented, Tooltip } from '@lobehub/ui';
+import { Flexbox } from '@lobehub/ui';
 import { Switch } from 'antd';
+import { SlidersHorizontal, Sparkles } from 'lucide-react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -51,7 +53,19 @@ const RuntimeToolsSection = memo(() => {
   // Ensure uninstalled state is hydrated from server before rendering
   useFetchUninstalledBuiltinTools(true);
 
-  const items: FormGroupItemType = {
+  const activateModeItem: FormGroupItemType = {
+    children: [
+      {
+        children: <ActivateModeSegmented />,
+        desc: t('settingSystemTools.runtime.activateMode.desc'),
+        label: t('settingSystemTools.runtime.activateMode.title'),
+        minWidth: undefined,
+      },
+    ],
+    title: t('settingSystemTools.runtime.title'),
+  };
+
+  const toggleItems: FormGroupItemType = {
     children: RUNTIME_TOOL_ITEMS.map((item) => ({
       children: (
         <RuntimeToolSwitch
@@ -71,7 +85,7 @@ const RuntimeToolsSection = memo(() => {
   return (
     <Form
       collapsible={false}
-      items={[items]}
+      items={[activateModeItem, toggleItems]}
       itemsType={'group'}
       variant={'filled'}
       {...FORM_STYLE}
@@ -109,5 +123,48 @@ const RuntimeToolSwitch = memo<{
 });
 
 RuntimeToolSwitch.displayName = 'RuntimeToolSwitch';
+
+/**
+ * User-level default activate mode selector.
+ * Separated to isolate re-renders.
+ */
+const ActivateModeSegmented = memo(() => {
+  const { t } = useTranslation('setting');
+  const currentMode = useToolStore((s) => builtinToolSelectors.userSkillActivateMode(s) ?? 'auto');
+  const updateMode = useToolStore((s) => s.updateUserSkillActivateMode);
+
+  return (
+    <Segmented
+      options={[
+        {
+          label: (
+            <Flexbox align="center" gap={4} horizontal>
+              <Icon icon={Sparkles} size="small" />
+              <Tooltip title={t('tools.skillActivateMode.auto.desc')}>
+                {t('tools.skillActivateMode.auto.title')}
+              </Tooltip>
+            </Flexbox>
+          ),
+          value: 'auto',
+        },
+        {
+          label: (
+            <Flexbox align="center" gap={4} horizontal>
+              <Icon icon={SlidersHorizontal} size="small" />
+              <Tooltip title={t('tools.skillActivateMode.manual.desc')}>
+                {t('tools.skillActivateMode.manual.title')}
+              </Tooltip>
+            </Flexbox>
+          ),
+          value: 'manual',
+        },
+      ]}
+      value={currentMode}
+      onChange={(value) => updateMode(value as 'auto' | 'manual')}
+    />
+  );
+});
+
+ActivateModeSegmented.displayName = 'ActivateModeSegmented';
 
 export default RuntimeToolsSection;

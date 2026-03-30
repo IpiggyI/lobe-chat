@@ -53,6 +53,7 @@ import { messageMapKey } from '@/store/chat/utils/messageMapKey';
 import { getElectronStoreState } from '@/store/electron';
 import { getServerConfigStoreState, serverConfigSelectors } from '@/store/serverConfig';
 import { getTaskStoreState } from '@/store/task';
+import { getToolStoreState } from '@/store/tool';
 import { pageAgentRuntime } from '@/store/tool/slices/builtin/executors/lobe-page-agent';
 import { type StoreSetter } from '@/store/types';
 import { toolInterventionSelectors } from '@/store/user/selectors';
@@ -230,7 +231,12 @@ export class StreamingExecutorActionImpl {
     //   exclude lobe-skills via smart bridge (keep lobe-skills only when user explicitly
     //   selected skills). Runtime-managed defaults (web-browsing, sandbox, memory, etc.)
     //   remain available regardless.
-    const isManualMode = agentConfig.chatConfig?.skillActivateMode === 'manual';
+    // Fallback chain for the mode: per-agent config → user-level default → 'auto'
+    const resolvedSkillMode =
+      agentConfig.chatConfig?.skillActivateMode
+      ?? getToolStoreState().userSkillActivateMode
+      ?? 'auto';
+    const isManualMode = resolvedSkillMode === 'manual';
     const hasExplicitSkills = isManualMode && detectExplicitSkills(mergedToolIds || []);
 
     const excludeDefaultToolIds =

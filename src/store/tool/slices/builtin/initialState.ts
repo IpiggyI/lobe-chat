@@ -17,6 +17,11 @@ export interface BuiltinToolState {
    * Loading state for fetching uninstalled builtin tools
    */
   uninstalledBuiltinToolsLoading: boolean;
+  /**
+   * User-level default for skill activate mode.
+   * undefined means not yet loaded from server (treated as 'auto').
+   */
+  userSkillActivateMode?: 'auto' | 'manual';
 }
 
 export const initialBuiltinToolState: BuiltinToolState = {
@@ -25,4 +30,5 @@ export const initialBuiltinToolState: BuiltinToolState = {
   builtinTools,
   uninstalledBuiltinTools: defaultUninstalledBuiltinTools,
   uninstalledBuiltinToolsLoading: true,
+  userSkillActivateMode: undefined,
 };

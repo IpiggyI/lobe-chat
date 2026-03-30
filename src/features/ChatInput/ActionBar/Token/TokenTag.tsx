@@ -103,9 +103,12 @@ const Token = memo(() => {
   // Tool usage token
   const canUseTool = useModelSupportToolUse(model, provider);
   const pluginIds = useAgentStore((s) => agentByIdSelectors.getAgentPluginsById(agentId)(s));
-  const skillActivateMode = useAgentStore((s) =>
-    chatConfigByIdSelectors.getSkillActivateModeById(agentId)(s),
+  // Read raw per-agent value (undefined = not set) so we can fallback to user-level default
+  const agentSkillMode = useAgentStore((s) =>
+    chatConfigByIdSelectors.getChatConfigById(agentId)(s).skillActivateMode,
   );
+  const userSkillMode = useToolStore((s) => s.userSkillActivateMode);
+  const skillActivateMode = agentSkillMode ?? userSkillMode ?? 'auto';
 
   const toolsString = useToolStore(
     useCallback(() => {

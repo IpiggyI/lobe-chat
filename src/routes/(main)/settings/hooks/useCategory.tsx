@@ -196,7 +196,7 @@ export const useCategory = () => {
         key: SettingsTabs.Proxy,
         label: t('tab.proxy'),
       },
-      isDesktop && {
+      {
         icon: TerminalSquare,
         key: SettingsTabs.SystemTools,
         label: t('tab.systemTools'),
