@@ -11,6 +11,7 @@ import {
 import { GroupAgentBuilderIdentifier } from '@lobechat/builtin-tool-group-agent-builder';
 import { LobeAgentIdentifier } from '@lobechat/builtin-tool-lobe-agent';
 import { PageAgentIdentifier } from '@lobechat/builtin-tool-page-agent';
+import { SkillsIdentifier } from '@lobechat/builtin-tool-skills';
 import { WebOnboardingIdentifier } from '@lobechat/builtin-tool-web-onboarding';
 import { KLAVIS_SERVER_TYPES, LOBEHUB_SKILL_PROVIDERS } from '@lobechat/const';
 import type {
@@ -682,19 +683,22 @@ export const contextEngineering = async ({
     enableAgentMode: agentChatConfigSelectors.currentChatConfig(agentStoreState).enableAgentMode,
 
     // Skills configuration
+    // Gate: only inject skill prompts when lobe-skills runtime is in the active tools list
+    // (fork token-saving optimization — avoids injecting prompts when the AI can't activate skills).
     // In auto mode: expose all installed skills so the AI can discover and activate them
     // In manual mode: only expose user-selected skills (filtered by pluginIds)
     skillsConfig: {
-      enabledSkills: plugins
-        ? (() => {
-            const skillSet = resolveClientSkills(plugins);
-            if (!isInAutoSkillMode) {
-              const selectedIds = new Set(plugins);
-              return skillSet.skills.filter((s) => selectedIds.has(s.identifier));
-            }
-            return skillSet.skills;
-          })()
-        : undefined,
+      enabledSkills:
+        plugins && tools?.includes(SkillsIdentifier)
+          ? (() => {
+              const skillSet = resolveClientSkills(plugins);
+              if (!isInAutoSkillMode) {
+                const selectedIds = new Set(plugins);
+                return skillSet.skills.filter((s) => selectedIds.has(s.identifier));
+              }
+              return skillSet.skills;
+            })()
+          : undefined,
     },
 
     // Tool Discovery configuration

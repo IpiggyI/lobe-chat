@@ -11,6 +11,7 @@ import {
   injectSelfFeedbackIntentTool,
   shouldExposeSelfFeedbackIntentTool,
 } from '@lobechat/builtin-tool-self-iteration';
+import { SkillsIdentifier } from '@lobechat/builtin-tool-skills';
 import { TaskIdentifier } from '@lobechat/builtin-tool-task';
 import { builtinTools, manualModeExcludeToolIds } from '@lobechat/builtin-tools';
 import { LOADING_FLAT } from '@lobechat/const';
@@ -1293,10 +1294,35 @@ export class AiAgentService {
       ];
       log('execAgent: agent configured plugins: %O', pluginIds);
 
+      // When skillActivateMode is 'manual', exclude discovery tools (lobe-activator, lobe-skill-store).
+      // Additionally exclude lobe-skills unless user explicitly selected skills (bridge mode).
       const isManualMode = agentConfig.chatConfig?.skillActivateMode === 'manual';
 
+      let hasExplicitSkills = false;
+      if (isManualMode) {
+        const builtinSkillIds = new Set(
+          builtinSkills
+            .filter((s) => !disabledBuiltinToolIds.includes(s.identifier))
+            .map((s) => s.identifier),
+        );
+        hasExplicitSkills = pluginIds.some((id) => builtinSkillIds.has(id));
+        if (!hasExplicitSkills) {
+          const skillModel = new AgentSkillModel(this.db, this.userId);
+          const { data: userSkills } = await skillModel.findAll();
+          hasExplicitSkills = pluginIds.some((id) =>
+            userSkills.some((s) => s.identifier === id),
+          );
+        }
+      }
+
+      const excludeDefaultToolIds = isManualMode
+        ? hasExplicitSkills
+          ? manualModeExcludeToolIds // bridge: keep lobe-skills for selected skills
+          : [...manualModeExcludeToolIds, SkillsIdentifier] // pure mode: also exclude lobe-skills
+        : undefined;
+
       toolsResult = toolsEngine.generateToolsDetailed({
-        excludeDefaultToolIds: isManualMode ? manualModeExcludeToolIds : undefined,
+        excludeDefaultToolIds,
         model,
         provider,
         toolIds: pluginIds,
