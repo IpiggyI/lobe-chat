@@ -1,4 +1,5 @@
 // @vitest-environment node
+import { LobeActivatorManifest } from '@lobechat/builtin-tool-activator';
 import { GroupAgentBuilderManifest } from '@lobechat/builtin-tool-group-agent-builder';
 import { GroupManagementManifest } from '@lobechat/builtin-tool-group-management';
 import { KnowledgeBaseManifest } from '@lobechat/builtin-tool-knowledge-base';
@@ -8,7 +9,6 @@ import { MemoryManifest } from '@lobechat/builtin-tool-memory';
 import { RemoteDeviceManifest } from '@lobechat/builtin-tool-remote-device';
 import { SkillStoreManifest } from '@lobechat/builtin-tool-skill-store';
 import { SkillsManifest } from '@lobechat/builtin-tool-skills';
-import { LobeToolsManifest } from '@lobechat/builtin-tool-tools';
 import { WebBrowsingManifest } from '@lobechat/builtin-tool-web-browsing';
 import { builtinTools } from '@lobechat/builtin-tools';
 import { ToolsEngine } from '@lobechat/context-engine';
@@ -976,7 +976,7 @@ describe('createServerAgentToolsEngine', () => {
       const engine = createServerAgentToolsEngine(context, {
         agentConfig: { plugins: ['test-plugin'], chatConfig: { searchMode: 'on' } },
         disabledBuiltinToolIds: [
-          LobeToolsManifest.identifier,
+          LobeActivatorManifest.identifier,
           SkillsManifest.identifier,
           SkillStoreManifest.identifier,
         ],
@@ -991,7 +991,7 @@ describe('createServerAgentToolsEngine', () => {
       });
 
       // Disabled tools should NOT appear in enabledToolIds
-      expect(result.enabledToolIds).not.toContain(LobeToolsManifest.identifier);
+      expect(result.enabledToolIds).not.toContain(LobeActivatorManifest.identifier);
       expect(result.enabledToolIds).not.toContain(SkillsManifest.identifier);
       expect(result.enabledToolIds).not.toContain(SkillStoreManifest.identifier);
 
@@ -1016,7 +1016,7 @@ describe('createServerAgentToolsEngine', () => {
       });
 
       // alwaysOnToolIds should be enabled by default
-      expect(result.enabledToolIds).toContain(LobeToolsManifest.identifier);
+      expect(result.enabledToolIds).toContain(LobeActivatorManifest.identifier);
       expect(result.enabledToolIds).toContain(SkillsManifest.identifier);
     });
 
@@ -1024,21 +1024,21 @@ describe('createServerAgentToolsEngine', () => {
       const context = createMockContext();
       const engine = createServerAgentToolsEngine(context, {
         agentConfig: {
-          plugins: [LobeToolsManifest.identifier, SkillsManifest.identifier, 'test-plugin'],
+          plugins: [LobeActivatorManifest.identifier, SkillsManifest.identifier, 'test-plugin'],
         },
-        disabledBuiltinToolIds: [LobeToolsManifest.identifier, SkillsManifest.identifier],
+        disabledBuiltinToolIds: [LobeActivatorManifest.identifier, SkillsManifest.identifier],
         model: 'gpt-4',
         provider: 'openai',
       });
 
       const result = engine.generateToolsDetailed({
-        toolIds: [LobeToolsManifest.identifier, SkillsManifest.identifier, 'test-plugin'],
+        toolIds: [LobeActivatorManifest.identifier, SkillsManifest.identifier, 'test-plugin'],
         model: 'gpt-4',
         provider: 'openai',
       });
 
       // Global disable takes precedence over agent-level plugin config
-      expect(result.enabledToolIds).not.toContain(LobeToolsManifest.identifier);
+      expect(result.enabledToolIds).not.toContain(LobeActivatorManifest.identifier);
       expect(result.enabledToolIds).not.toContain(SkillsManifest.identifier);
       expect(result.enabledToolIds).toContain('test-plugin');
     });
@@ -1047,7 +1047,7 @@ describe('createServerAgentToolsEngine', () => {
       const context = createMockContext();
       const engine = createServerAgentToolsEngine(context, {
         agentConfig: { plugins: ['test-plugin'] },
-        disabledBuiltinToolIds: [LobeToolsManifest.identifier, SkillsManifest.identifier],
+        disabledBuiltinToolIds: [LobeActivatorManifest.identifier, SkillsManifest.identifier],
         model: 'gpt-4',
         provider: 'openai',
       });
@@ -1059,7 +1059,7 @@ describe('createServerAgentToolsEngine', () => {
       });
 
       const manifestIds = result.enabledManifests.map((m) => m.identifier);
-      expect(manifestIds).not.toContain(LobeToolsManifest.identifier);
+      expect(manifestIds).not.toContain(LobeActivatorManifest.identifier);
       expect(manifestIds).not.toContain(SkillsManifest.identifier);
     });
   });
