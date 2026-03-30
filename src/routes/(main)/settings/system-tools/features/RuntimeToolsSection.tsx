@@ -1,8 +1,8 @@
 'use client';
 
+import { LobeActivatorManifest } from '@lobechat/builtin-tool-activator';
 import { SkillStoreManifest } from '@lobechat/builtin-tool-skill-store';
 import { SkillsManifest } from '@lobechat/builtin-tool-skills';
-import { LobeToolsManifest } from '@lobechat/builtin-tool-tools';
 import { type FormGroupItemType } from '@lobehub/ui';
 import { Form } from '@lobehub/ui';
 import { Switch } from 'antd';
@@ -20,7 +20,7 @@ import { builtinToolSelectors } from '@/store/tool/selectors';
 const RUNTIME_TOOL_ITEMS = [
   {
     descKey: 'settingSystemTools.runtime.toolDiscovery.desc',
-    identifier: LobeToolsManifest.identifier,
+    identifier: LobeActivatorManifest.identifier,
     labelKey: 'settingSystemTools.runtime.toolDiscovery.title',
   },
   {
