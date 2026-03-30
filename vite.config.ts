@@ -106,6 +106,7 @@ export default defineConfig({
   build: {
     modulePreload: sharedModulePreload,
     outDir: isAuth ? 'dist/auth' : isMobile ? 'dist/mobile' : 'dist/desktop',
+    // Large SPA builds can OOM during Vite's post-build gzip size reporting on CI/Vercel.
     reportCompressedSize: false,
     rolldownOptions: {
       ...(enableViteDevTools && { devtools: {} }),
