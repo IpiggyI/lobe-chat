@@ -3,9 +3,8 @@
 import { LobeActivatorManifest } from '@lobechat/builtin-tool-activator';
 import { SkillStoreManifest } from '@lobechat/builtin-tool-skill-store';
 import { SkillsManifest } from '@lobechat/builtin-tool-skills';
-import { type FormGroupItemType } from '@lobehub/ui';
-import { Form, Icon, Segmented, Tooltip } from '@lobehub/ui';
-import { Flexbox } from '@lobehub/ui';
+import type { FormGroupItemType } from '@lobehub/ui';
+import { Form, Icon, Segmented } from '@lobehub/ui';
 import { Switch } from 'antd';
 import { SlidersHorizontal, Sparkles } from 'lucide-react';
 import { memo } from 'react';
@@ -135,31 +134,23 @@ const ActivateModeSegmented = memo(() => {
 
   return (
     <Segmented
+      shape="round"
+      value={currentMode}
+      variant="outlined"
       options={[
         {
-          label: (
-            <Flexbox align="center" gap={4} horizontal>
-              <Icon icon={Sparkles} size="small" />
-              <Tooltip title={t('tools.skillActivateMode.auto.desc')}>
-                {t('tools.skillActivateMode.auto.title')}
-              </Tooltip>
-            </Flexbox>
-          ),
+          icon: <Icon icon={Sparkles} size="small" />,
+          label: t('tools.skillActivateMode.auto.title'),
+          tooltip: t('tools.skillActivateMode.auto.desc'),
           value: 'auto',
         },
         {
-          label: (
-            <Flexbox align="center" gap={4} horizontal>
-              <Icon icon={SlidersHorizontal} size="small" />
-              <Tooltip title={t('tools.skillActivateMode.manual.desc')}>
-                {t('tools.skillActivateMode.manual.title')}
-              </Tooltip>
-            </Flexbox>
-          ),
+          icon: <Icon icon={SlidersHorizontal} size="small" />,
+          label: t('tools.skillActivateMode.manual.title'),
+          tooltip: t('tools.skillActivateMode.manual.desc'),
           value: 'manual',
         },
       ]}
-      value={currentMode}
       onChange={(value) => updateMode(value as 'auto' | 'manual')}
     />
   );
