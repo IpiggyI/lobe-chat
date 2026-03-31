@@ -84,7 +84,7 @@ const PopoverContent = memo<PopoverContentProps>(({ items, onOpenStore }) => {
       </Flexbox>
       <ScrollSignalProvider
         style={{
-          height: 480,
+          maxHeight: 480,
           overflowY: 'auto',
         }}
       >
