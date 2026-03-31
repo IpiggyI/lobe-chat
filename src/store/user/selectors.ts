@@ -8,5 +8,6 @@ export {
   systemAgentSelectors,
   toolInterventionSelectors,
   userGeneralSettingsSelectors,
+  userToolSettingsSelectors,
   userUsageSettingsSelectors,
 } from './slices/settings/selectors';

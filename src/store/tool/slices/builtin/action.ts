@@ -6,6 +6,7 @@ import useSWR from 'swr';
 import { mutate } from '@/libs/swr';
 import { userService } from '@/services/user';
 import { type StoreSetter } from '@/store/types';
+import { getUserStoreState } from '@/store/user/store';
 import { setNamespace } from '@/utils/storeDebug';
 
 import { type ToolStore } from '../../store';
@@ -117,7 +118,6 @@ export class BuiltinToolActionImpl {
         uninstalledBuiltinTools:
           userUninstalled === undefined ? defaultUninstalledBuiltinTools : userUninstalled,
         uninstalledBuiltinToolsLoading: false,
-        userSkillActivateMode: toolSettings?.skillActivateMode,
       },
       false,
       n('ensureUninstalledToolsLoaded'),
@@ -186,8 +186,9 @@ export class BuiltinToolActionImpl {
    * Update user-level skill activate mode default
    */
   updateUserSkillActivateMode = async (mode: 'auto' | 'manual'): Promise<void> => {
-    this.#set({ userSkillActivateMode: mode }, false, n('updateUserSkillActivateMode'));
-    await userService.updateUserSettings({ tool: { skillActivateMode: mode } });
+    // Route through user store's setSettings to deep-merge with existing tool config
+    // (prevents overwriting humanIntervention, uninstalledBuiltinTools, etc.)
+    await getUserStoreState().setSettings({ tool: { skillActivateMode: mode } });
   };
 
   useFetchUninstalledBuiltinTools = (enabled: boolean): SWRResponse<string[]> => {
@@ -197,13 +198,6 @@ export class BuiltinToolActionImpl {
         const userState = await userService.getUserState();
         const toolSettings = userState?.settings?.tool;
         const userUninstalled = toolSettings?.uninstalledBuiltinTools;
-
-        // Sync userSkillActivateMode from the same response (no extra request)
-        this.#set(
-          { userSkillActivateMode: toolSettings?.skillActivateMode },
-          false,
-          n('syncUserSkillActivateMode'),
-        );
 
         // If user has never set their preference, use default (non-recommended tools are uninstalled)
         if (userUninstalled === undefined) return defaultUninstalledBuiltinTools;
