@@ -279,12 +279,6 @@ const uninstalledBuiltinTools = (s: ToolStoreState): string[] => s.uninstalledBu
 const isBuiltinToolInstalled = (identifier: string) => (s: ToolStoreState) =>
   !s.uninstalledBuiltinTools.includes(identifier);
 
-/**
- * Get user-level skill activate mode default
- */
-const userSkillActivateMode = (s: ToolStoreState): 'auto' | 'manual' | undefined =>
-  s.userSkillActivateMode;
-
 export const builtinToolSelectors = {
   allMetaList,
   discoverableMetaList,
@@ -295,5 +289,4 @@ export const builtinToolSelectors = {
   metaList,
   metaListIncludingHidden,
   uninstalledBuiltinTools,
-  userSkillActivateMode,
 };

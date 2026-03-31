@@ -299,7 +299,7 @@ export const mobileRoutes: RouteObject[] = [
           // Other settings tabs (common, agent, memory, tts, about, etc.)
           {
             element: dynamicElement(
-              () => import('@/routes/(main)/settings'),
+              () => import('@/routes/(mobile)/settings'),
               'Mobile > Settings > Tab',
             ),
             path: ':tab',

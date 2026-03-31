@@ -13,6 +13,8 @@ import { useTranslation } from 'react-i18next';
 import { FORM_STYLE } from '@/const/layoutTokens';
 import { useToolStore } from '@/store/tool';
 import { builtinToolSelectors } from '@/store/tool/selectors';
+import { useUserStore } from '@/store/user';
+import { userToolSettingsSelectors } from '@/store/user/selectors';
 
 /**
  * Runtime tool toggle configuration.
@@ -129,7 +131,7 @@ RuntimeToolSwitch.displayName = 'RuntimeToolSwitch';
  */
 const ActivateModeSegmented = memo(() => {
   const { t } = useTranslation('setting');
-  const currentMode = useToolStore((s) => builtinToolSelectors.userSkillActivateMode(s) ?? 'auto');
+  const currentMode = useUserStore((s) => userToolSettingsSelectors.skillActivateMode(s) ?? 'auto');
   const updateMode = useToolStore((s) => s.updateUserSkillActivateMode);
 
   return (

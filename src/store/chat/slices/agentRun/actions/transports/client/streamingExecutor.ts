@@ -53,10 +53,9 @@ import { messageMapKey } from '@/store/chat/utils/messageMapKey';
 import { getElectronStoreState } from '@/store/electron';
 import { getServerConfigStoreState, serverConfigSelectors } from '@/store/serverConfig';
 import { getTaskStoreState } from '@/store/task';
-import { getToolStoreState } from '@/store/tool';
 import { pageAgentRuntime } from '@/store/tool/slices/builtin/executors/lobe-page-agent';
 import { type StoreSetter } from '@/store/types';
-import { toolInterventionSelectors } from '@/store/user/selectors';
+import { toolInterventionSelectors, userToolSettingsSelectors } from '@/store/user/selectors';
 import { getUserStoreState } from '@/store/user/store';
 
 import { buildRunLifecycle } from '../../lifecycle/buildRunLifecycle';
@@ -233,9 +232,9 @@ export class StreamingExecutorActionImpl {
     //   remain available regardless.
     // Fallback chain for the mode: per-agent config → user-level default → 'auto'
     const resolvedSkillMode =
-      agentConfig.chatConfig?.skillActivateMode
-      ?? getToolStoreState().userSkillActivateMode
-      ?? 'auto';
+      agentConfig.chatConfig?.skillActivateMode ??
+      userToolSettingsSelectors.skillActivateMode(getUserStoreState()) ??
+      'auto';
     const isManualMode = resolvedSkillMode === 'manual';
     const hasExplicitSkills = isManualMode && detectExplicitSkills(mergedToolIds || []);
 

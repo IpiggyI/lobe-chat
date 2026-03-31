@@ -1,3 +1,5 @@
+import { SkillsIdentifier } from '@lobechat/builtin-tool-skills';
+import { manualModeExcludeToolIds } from '@lobechat/builtin-tools';
 import { ToolNameResolver } from '@lobechat/context-engine';
 import { pluginPrompts } from '@lobechat/prompts';
 import { Center, Flexbox, Tooltip } from '@lobehub/ui';
@@ -6,9 +8,6 @@ import { cssVar } from 'antd-style';
 import numeral from 'numeral';
 import { memo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-
-import { SkillsIdentifier } from '@lobechat/builtin-tool-skills';
-import { manualModeExcludeToolIds } from '@lobechat/builtin-tools';
 
 import { createAgentToolsEngine, detectExplicitSkills } from '@/helpers/toolEngineering';
 import { useModelContextWindowTokens } from '@/hooks/useModelContextWindowTokens';
@@ -23,7 +22,11 @@ import { topicSelectors } from '@/store/chat/selectors';
 import { useToolStore } from '@/store/tool';
 import { pluginHelpers } from '@/store/tool/helpers';
 import { useUserStore } from '@/store/user';
-import { settingsSelectors, userGeneralSettingsSelectors } from '@/store/user/selectors';
+import {
+  settingsSelectors,
+  userGeneralSettingsSelectors,
+  userToolSettingsSelectors,
+} from '@/store/user/selectors';
 
 import { useAgentId } from '../../hooks/useAgentId';
 import { useChatInputStore } from '../../store';
@@ -104,10 +107,10 @@ const Token = memo(() => {
   const canUseTool = useModelSupportToolUse(model, provider);
   const pluginIds = useAgentStore((s) => agentByIdSelectors.getAgentPluginsById(agentId)(s));
   // Read raw per-agent value (undefined = not set) so we can fallback to user-level default
-  const agentSkillMode = useAgentStore((s) =>
-    chatConfigByIdSelectors.getChatConfigById(agentId)(s).skillActivateMode,
+  const agentSkillMode = useAgentStore(
+    (s) => chatConfigByIdSelectors.getChatConfigById(agentId)(s).skillActivateMode,
   );
-  const userSkillMode = useToolStore((s) => s.userSkillActivateMode);
+  const userSkillMode = useUserStore(userToolSettingsSelectors.skillActivateMode);
   const skillActivateMode = agentSkillMode ?? userSkillMode ?? 'auto';
 
   const toolsString = useToolStore(
