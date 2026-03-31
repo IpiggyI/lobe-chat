@@ -14,6 +14,7 @@ import {
   Map,
   PaletteIcon,
   Sparkles,
+  TerminalSquare,
   UserCircle,
 } from 'lucide-react';
 import { useMemo } from 'react';
@@ -117,6 +118,11 @@ export const useCategory = (): CategoryGroup[] => {
     ].filter((item): item is CategoryItem => Boolean(item));
 
     const system: CategoryItem[] = [
+      makeItem({
+        icon: TerminalSquare,
+        key: SettingsTabs.SystemTools,
+        label: t('setting:tab.systemTools'),
+      }),
       makeItem({ icon: Database, key: SettingsTabs.Storage, label: t('setting:tab.storage') }),
       isDevMode &&
         makeItem({ icon: KeyIcon, key: SettingsTabs.APIKey, label: t('auth:tab.apikey') }),
