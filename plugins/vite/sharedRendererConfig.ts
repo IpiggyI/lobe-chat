@@ -81,6 +81,10 @@ function sharedManualChunks(id: string): string | undefined {
   // model-bank (monorepo package — split before node_modules guard)
   if (id.includes('model-bank')) return 'providerConfig';
 
+  // Zustand stores — group all store modules into a single chunk to eliminate
+  // circular chunk dependencies between store.ts ↔ index.ts barrel re-exports.
+  if (id.includes('/src/store/') && !id.includes('node_modules')) return 'app-stores';
+
   if (!id.includes('node_modules')) return;
 
   // antd locale → merge into i18n-{locale}
