@@ -256,6 +256,8 @@ export default defineConfig({
       registerType: 'prompt',
       workbox: {
         globPatterns: ['**/*.{js,css,html,woff2}'],
+        // Keep the oversized store bundle out of precache to avoid Workbox build failures.
+        globIgnores: ['**/assets/app-stores-*.js'],
         maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
         runtimeCaching: [
           {
