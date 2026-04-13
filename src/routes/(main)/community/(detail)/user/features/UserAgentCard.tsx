@@ -35,8 +35,8 @@ import urlJoin from 'url-join';
 import PublishedTime from '@/components/PublishedTime';
 import { agentService } from '@/services/agent';
 import { discoverService } from '@/services/discover';
-import { useAgentStore } from '@/store/agent';
-import { useHomeStore } from '@/store/home';
+import { useAgentStore } from '@/store/agent/store';
+import { useHomeStore } from '@/store/home/store';
 import { type AgentStatus, type DiscoverAssistantItem } from '@/types/discover';
 import { formatIntergerNumber } from '@/utils/format';
 

@@ -6,9 +6,9 @@ import { CheckCircle, Download, Package, Search } from 'lucide-react';
 import { memo, useState } from 'react';
 
 import { useMarketAuth } from '@/layout/AuthProvider/MarketAuth';
-import { useAgentStore } from '@/store/agent';
-import { useToolStore } from '@/store/tool';
+import { useAgentStore } from '@/store/agent/store';
 import { mcpStoreSelectors, pluginSelectors } from '@/store/tool/selectors';
+import { useToolStore } from '@/store/tool/store';
 
 import type { MarketToolItem, SearchMarketToolsParams, SearchMarketToolsState } from '../../types';
 

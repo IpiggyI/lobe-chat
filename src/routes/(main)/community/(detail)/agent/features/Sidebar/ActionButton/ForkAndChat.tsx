@@ -13,8 +13,8 @@ import { useMarketAuth } from '@/layout/AuthProvider/MarketAuth';
 import { agentService } from '@/services/agent';
 import { discoverService } from '@/services/discover';
 import { marketApiService } from '@/services/marketApi';
-import { useAgentStore } from '@/store/agent';
-import { useHomeStore } from '@/store/home';
+import { useAgentStore } from '@/store/agent/store';
+import { useHomeStore } from '@/store/home/store';
 
 import { useDetailContext } from '../../DetailProvider';
 

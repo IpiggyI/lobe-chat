@@ -9,9 +9,9 @@ import SkeletonList from '@/features/NavPanel/components/SkeletonList';
 import { useFetchAgentList } from '@/hooks/useFetchAgentList';
 import AgentAvatar from '@/routes/(main)/home/_layout/Body/Agent/List/AgentItem/Avatar';
 import { AgentModalProvider } from '@/routes/(main)/home/_layout/Body/Agent/ModalProvider';
-import { useAgentStore } from '@/store/agent';
-import { useHomeStore } from '@/store/home';
+import { useAgentStore } from '@/store/agent/store';
 import { homeAgentListSelectors } from '@/store/home/selectors';
+import { useHomeStore } from '@/store/home/store';
 
 import AgentItem from './AgentItem';
 

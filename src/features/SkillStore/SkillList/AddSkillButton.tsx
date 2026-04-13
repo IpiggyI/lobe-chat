@@ -5,8 +5,8 @@ import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import DevModal from '@/features/PluginDevModal';
-import { useAgentStore } from '@/store/agent';
-import { useToolStore } from '@/store/tool';
+import { useAgentStore } from '@/store/agent/store';
+import { useToolStore } from '@/store/tool/store';
 
 import ImportFromGithubModal from './ImportFromGithubModal';
 import ImportFromUrlModal from './ImportFromUrlModal';
