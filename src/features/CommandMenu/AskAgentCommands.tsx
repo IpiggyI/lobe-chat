@@ -4,10 +4,10 @@ import { Command } from 'cmdk';
 import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useAgentStore } from '@/store/agent';
 import { builtinAgentSelectors } from '@/store/agent/selectors/builtinAgentSelectors';
-import { useHomeStore } from '@/store/home';
+import { useAgentStore } from '@/store/agent/store';
 import { homeAgentListSelectors } from '@/store/home/selectors';
+import { useHomeStore } from '@/store/home/store';
 
 import { useCommandMenuContext } from './CommandMenuContext';
 import { styles } from './styles';

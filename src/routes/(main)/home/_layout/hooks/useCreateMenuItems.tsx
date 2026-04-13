@@ -18,9 +18,9 @@ import { useOptionalAgentModal } from '@/routes/(main)/home/_layout/Body/Agent/M
 import type { CreateAgentParams } from '@/services/agent';
 import type { GroupMemberConfig } from '@/services/chatGroup';
 import { chatGroupService } from '@/services/chatGroup';
-import { useAgentStore } from '@/store/agent';
+import { useAgentStore } from '@/store/agent/store';
 import { useAgentGroupStore } from '@/store/agentGroup';
-import { useHomeStore } from '@/store/home';
+import { useHomeStore } from '@/store/home/store';
 import { usePageStore } from '@/store/page';
 import { useUserStore } from '@/store/user';
 import { labPreferSelectors } from '@/store/user/selectors';

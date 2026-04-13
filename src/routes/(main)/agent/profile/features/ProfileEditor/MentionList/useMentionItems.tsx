@@ -14,9 +14,10 @@ import { memo, useCallback, useMemo } from 'react';
 import PluginAvatar from '@/components/Plugins/PluginAvatar';
 import { globalAgentContextManager } from '@/helpers/GlobalAgentContextManager';
 import { usePermission } from '@/hooks/usePermission';
-import { useAgentStore } from '@/store/agent';
-import { pluginHelpers, useToolStore } from '@/store/tool';
+import { useAgentStore } from '@/store/agent/store';
+import { pluginHelpers } from '@/store/tool/helpers';
 import { toolSelectors } from '@/store/tool/selectors';
+import { useToolStore } from '@/store/tool/store';
 import { hydrationPrompt } from '@/utils/promptTemplate';
 
 import MentionDropdown from './MentionDropdown';

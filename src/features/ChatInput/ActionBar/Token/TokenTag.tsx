@@ -13,14 +13,14 @@ import { createAgentToolsEngine, detectExplicitSkills } from '@/helpers/toolEngi
 import { useModelContextWindowTokens } from '@/hooks/useModelContextWindowTokens';
 import { useModelSupportToolUse } from '@/hooks/useModelSupportToolUse';
 import { useTokenCount } from '@/hooks/useTokenCount';
-import { useAgentStore } from '@/store/agent';
 import { agentByIdSelectors, chatConfigByIdSelectors } from '@/store/agent/selectors';
+import { useAgentStore } from '@/store/agent/store';
 import { useAiInfraStore } from '@/store/aiInfra';
 import { aiModelSelectors, aiProviderSelectors } from '@/store/aiInfra/selectors';
 import { useChatStore } from '@/store/chat';
 import { topicSelectors } from '@/store/chat/selectors';
-import { useToolStore } from '@/store/tool';
 import { pluginHelpers } from '@/store/tool/helpers';
+import { useToolStore } from '@/store/tool/store';
 import { useUserStore } from '@/store/user';
 import {
   settingsSelectors,
@@ -56,7 +56,7 @@ const Token = memo(() => {
     enableAgentMode,
     searchMode,
     useModelBuiltinSearch,
-    skillActivateMode,
+    agentSkillMode,
     agentMemoryEnabled,
     runtimeMode,
     hasEnabledKnowledgeBases,
@@ -71,7 +71,8 @@ const Token = memo(() => {
       chatConfig.enableAgentMode,
       chatConfig.searchMode,
       chatConfig.useModelBuiltinSearch,
-      chatConfigByIdSelectors.getSkillActivateModeById(agentId)(s),
+      // Raw per-agent value (undefined = not set) so we can fallback to user-level default
+      chatConfig.skillActivateMode,
       chatConfig.memory?.enabled,
       chatConfigByIdSelectors.getRuntimeModeById(agentId)(s),
       agentByIdSelectors
@@ -79,6 +80,8 @@ const Token = memo(() => {
         .some((item) => item.enabled),
     ];
   });
+  const userSkillMode = useUserStore(userToolSettingsSelectors.skillActivateMode);
+  const skillActivateMode = agentSkillMode ?? userSkillMode ?? 'auto';
   const globalMemoryEnabled = useUserStore(settingsSelectors.memoryEnabled);
   const effectiveMemoryEnabled = agentMemoryEnabled ?? globalMemoryEnabled;
   const [isProviderHasBuiltinSearch, isModelHasBuiltinSearch, isModelBuiltinSearchInternal] =
@@ -106,12 +109,6 @@ const Token = memo(() => {
   // Tool usage token
   const canUseTool = useModelSupportToolUse(model, provider);
   const pluginIds = useAgentStore((s) => agentByIdSelectors.getAgentPluginsById(agentId)(s));
-  // Read raw per-agent value (undefined = not set) so we can fallback to user-level default
-  const agentSkillMode = useAgentStore(
-    (s) => chatConfigByIdSelectors.getChatConfigById(agentId)(s).skillActivateMode,
-  );
-  const userSkillMode = useUserStore(userToolSettingsSelectors.skillActivateMode);
-  const skillActivateMode = agentSkillMode ?? userSkillMode ?? 'auto';
 
   const toolsString = useToolStore(
     useCallback(() => {

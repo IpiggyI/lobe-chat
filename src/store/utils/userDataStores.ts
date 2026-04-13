@@ -1,21 +1,21 @@
 import { unstable_batchedUpdates } from 'react-dom';
 
-import { useAgentStore } from '@/store/agent';
+import { useAgentStore } from '@/store/agent/store';
 import { useAgentGroupStore } from '@/store/agentGroup';
 import { useChatStore } from '@/store/chat';
 import { useDiscoverStore } from '@/store/discover';
 import { useDocumentStore } from '@/store/document';
 import { useEvalStore } from '@/store/eval';
 import { useFileStore } from '@/store/file';
-import { useHomeStore } from '@/store/home';
+import { useHomeStore } from '@/store/home/store';
 import { useImageStore } from '@/store/image';
 import { useKnowledgeBaseStore } from '@/store/library';
 import { useMentionStore } from '@/store/mention';
-import { useNotebookStore } from '@/store/notebook';
+import { useNotebookStore } from '@/store/notebook/store';
 import { usePageStore } from '@/store/page';
 import { useSessionStore } from '@/store/session';
 import { useTaskStore } from '@/store/task';
-import { useToolStore } from '@/store/tool';
+import { useToolStore } from '@/store/tool/store';
 import { useUserStore } from '@/store/user';
 import { useUserMemoryStore } from '@/store/userMemory';
 import type { ResetableStore } from '@/store/utils/resetableStore';

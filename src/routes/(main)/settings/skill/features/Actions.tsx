@@ -8,11 +8,12 @@ import { useTranslation } from 'react-i18next';
 import McpSettingsModal from '@/features/MCP/MCPSettings/McpSettingsModal';
 import PluginDetailModal from '@/features/PluginDetailModal';
 import { usePermission } from '@/hooks/usePermission';
-import { useAgentStore } from '@/store/agent';
 import { agentSelectors } from '@/store/agent/selectors';
+import { useAgentStore } from '@/store/agent/store';
 import { useServerConfigStore } from '@/store/serverConfig';
-import { pluginHelpers, useToolStore } from '@/store/tool';
+import { pluginHelpers } from '@/store/tool/helpers';
 import { mcpStoreSelectors, pluginSelectors } from '@/store/tool/selectors';
+import { useToolStore } from '@/store/tool/store';
 import { type LobeToolType } from '@/types/tool/tool';
 
 import EditCustomPlugin from './EditCustomPlugin';

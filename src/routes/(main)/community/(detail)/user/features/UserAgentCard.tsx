@@ -35,8 +35,8 @@ import WorkspaceLink from '@/features/Workspace/WorkspaceLink';
 import { usePermission } from '@/hooks/usePermission';
 import { agentService } from '@/services/agent';
 import { discoverService } from '@/services/discover';
-import { useAgentStore } from '@/store/agent';
-import { useHomeStore } from '@/store/home';
+import { useAgentStore } from '@/store/agent/store';
+import { useHomeStore } from '@/store/home/store';
 import { type AgentStatus, type DiscoverAssistantItem } from '@/types/discover';
 import { formatIntergerNumber } from '@/utils/format';
 

@@ -6,9 +6,9 @@ import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import ManifestPreviewer from '@/components/ManifestPreviewer';
-import { useAgentStore } from '@/store/agent';
-import { useToolStore } from '@/store/tool';
+import { useAgentStore } from '@/store/agent/store';
 import { customPluginSelectors, toolSelectors } from '@/store/tool/selectors';
+import { useToolStore } from '@/store/tool/store';
 
 interface PluginStatusProps {
   deprecated?: boolean;

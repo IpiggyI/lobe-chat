@@ -12,11 +12,11 @@ import { useTranslation } from 'react-i18next';
 
 import { contextSelectors, useConversationStore } from '@/features/Conversation/store';
 import { useMarketAuth } from '@/layout/AuthProvider/MarketAuth';
-import { useAgentStore } from '@/store/agent';
 import { agentByIdSelectors } from '@/store/agent/selectors';
-import { useToolStore } from '@/store/tool';
+import { useAgentStore } from '@/store/agent/store';
 import { type ComposioServer } from '@/store/tool/slices/composioStore';
 import { ComposioServerStatus, composioStoreSelectors } from '@/store/tool/slices/composioStore';
+import { useToolStore } from '@/store/tool/store';
 import { useUserStore } from '@/store/user';
 import { userProfileSelectors } from '@/store/user/selectors';
 
