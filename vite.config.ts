@@ -262,6 +262,7 @@ export default defineConfig({
         registerType: 'prompt',
         workbox: {
           globPatterns: ['**/*.{js,css,html,woff2}'],
+          // Keep Workbox above its default 2 MiB threshold for large generated assets.
           maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
           runtimeCaching: [
             {
