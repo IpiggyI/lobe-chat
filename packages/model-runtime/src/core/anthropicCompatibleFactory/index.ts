@@ -20,6 +20,7 @@ import { AgentRuntimeErrorType } from '../../types/error';
 import { AgentRuntimeError } from '../../utils/createError';
 import { debugStream } from '../../utils/debugStream';
 import { desensitizeUrl } from '../../utils/desensitizeUrl';
+import { logRawError } from '../../utils/rawCallLogger';
 import { getModelPricing } from '../../utils/getModelPricing';
 import type { ModelIdMappingOptions } from '../../utils/modelIdMapping';
 import { resolveMappedModelId } from '../../utils/modelIdMapping';
@@ -684,6 +685,7 @@ export const createAnthropicCompatibleRuntime = <T extends Record<string, any> =
           },
         );
       } catch (error) {
+        logRawError({ baseURL: this.baseURL, error, model: payload.model, operation: 'chat', provider: this.id });
         throw this.handleError(error);
       }
     }
@@ -699,6 +701,7 @@ export const createAnthropicCompatibleRuntime = <T extends Record<string, any> =
           requestModel: resolveMappedModelId(payload.model, this.modelIdMappingOptions),
         });
       } catch (error) {
+        logRawError({ baseURL: this.baseURL, error, model: payload.model, operation: 'generateObject', provider: this.id });
         throw this.handleError(error);
       }
     }

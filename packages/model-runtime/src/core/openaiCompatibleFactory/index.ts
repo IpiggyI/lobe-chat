@@ -48,6 +48,7 @@ import type {
 import { AgentRuntimeError } from '../../utils/createError';
 import { debugResponse, debugStream } from '../../utils/debugStream';
 import { desensitizeUrl } from '../../utils/desensitizeUrl';
+import { logRawError } from '../../utils/rawCallLogger';
 import { getModelPropertyWithFallback } from '../../utils/getFallbackModelProperty';
 import { getModelPricing } from '../../utils/getModelPricing';
 import { handleOpenAIError } from '../../utils/handleOpenAIError';
@@ -773,6 +774,7 @@ export const createOpenAICompatibleRuntime = <T extends Record<string, any> = an
           },
         );
       } catch (error) {
+        logRawError({ baseURL: this.baseURL, error, model: payload.model, operation: 'chat', provider: this.id });
         throw this.handleError(error);
       }
     }
@@ -1128,6 +1130,7 @@ export const createOpenAICompatibleRuntime = <T extends Record<string, any> = an
           return undefined;
         }
       } catch (error) {
+        logRawError({ baseURL: this.baseURL, error, model: payload.model, operation: 'generateObject', provider: this.id });
         const handledError = this.handleError(error);
 
         if (
@@ -1173,6 +1176,7 @@ export const createOpenAICompatibleRuntime = <T extends Record<string, any> = an
         log('received %d embeddings', res.data.length);
         return res.data.map((item) => item.embedding);
       } catch (error) {
+        logRawError({ baseURL: this.baseURL, error, model: payload.model, operation: 'embeddings', provider: this.id });
         throw this.handleError(error);
       }
     }
