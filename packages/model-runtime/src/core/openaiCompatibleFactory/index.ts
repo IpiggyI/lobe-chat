@@ -48,7 +48,7 @@ import type {
 import { AgentRuntimeError } from '../../utils/createError';
 import { debugResponse, debugStream } from '../../utils/debugStream';
 import { desensitizeUrl } from '../../utils/desensitizeUrl';
-import { logRawError } from '../../utils/rawCallLogger';
+import { logRawError, logRawRequest } from '../../utils/rawCallLogger';
 import { getModelPropertyWithFallback } from '../../utils/getFallbackModelProperty';
 import { getModelPricing } from '../../utils/getModelPricing';
 import { handleOpenAIError } from '../../utils/handleOpenAIError';
@@ -663,6 +663,7 @@ export const createOpenAICompatibleRuntime = <T extends Record<string, any> = an
 
         if (customClient?.createChatCompletionStream) {
           log('using custom client for chat completion stream');
+          logRawRequest({ baseURL: this.baseURL, model: payload.model, operation: 'chat', payload: processedPayload, provider: this.id });
           // Apply sampling sanitization to processedPayload for the custom client path.
           // We use processedPayload (ChatStreamPayload type) here because
           // createChatCompletionStream expects ChatStreamPayload, not the OpenAI SDK format.
@@ -711,6 +712,14 @@ export const createOpenAICompatibleRuntime = <T extends Record<string, any> = an
             // eslint-disable-next-line no-console
             console.log(JSON.stringify(requestPayload), '\n');
           }
+
+          logRawRequest({
+            baseURL: this.baseURL,
+            model: payload.model,
+            operation: 'chat',
+            payload: requestPayload,
+            provider: this.id,
+          });
 
           response = (await this.client.chat.completions.create(requestPayload, {
             // https://github.com/lobehub/lobe-chat/pull/318
@@ -1464,6 +1473,7 @@ export const createOpenAICompatibleRuntime = <T extends Record<string, any> = an
       }
 
       log('sending responses.create request');
+      logRawRequest({ baseURL: this.baseURL, model: payload.model, operation: 'chat', payload: postPayload, provider: this.id });
 
       const response = await this.client.responses.create(requestPayload, {
         headers: options?.requestHeaders,

@@ -20,7 +20,7 @@ import { AgentRuntimeErrorType } from '../../types/error';
 import { AgentRuntimeError } from '../../utils/createError';
 import { debugStream } from '../../utils/debugStream';
 import { desensitizeUrl } from '../../utils/desensitizeUrl';
-import { logRawError } from '../../utils/rawCallLogger';
+import { logRawError, logRawRequest } from '../../utils/rawCallLogger';
 import { getModelPricing } from '../../utils/getModelPricing';
 import type { ModelIdMappingOptions } from '../../utils/modelIdMapping';
 import { resolveMappedModelId } from '../../utils/modelIdMapping';
@@ -551,11 +551,14 @@ export const createAnthropicCompatibleRuntime = <T extends Record<string, any> =
           console.log(JSON.stringify(requestPayload), '\n');
         }
 
+        const requestBody = {
+          ...requestPayload,
+          metadata: options?.user ? { user_id: options.user } : undefined,
+        };
+        logRawRequest({ baseURL: this.baseURL, model: payload.model, operation: 'chat', payload: requestBody, provider: this.id });
+
         const response = await this.client.messages.create(
-          {
-            ...requestPayload,
-            metadata: options?.user ? { user_id: options.user } : undefined,
-          },
+          requestBody,
           {
             headers: options?.requestHeaders,
             signal: options?.signal,
