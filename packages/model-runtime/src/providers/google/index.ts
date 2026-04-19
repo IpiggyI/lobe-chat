@@ -24,6 +24,7 @@ import { type CreateVideoPayload, type CreateVideoResponse } from '../../types/v
 import { AgentRuntimeError } from '../../utils/createError';
 import { debugStream } from '../../utils/debugStream';
 import { getModelPricing } from '../../utils/getModelPricing';
+import { logRawError } from '../../utils/rawCallLogger';
 import { parseGoogleErrorMessage } from '../../utils/googleErrorParser';
 import { StreamingResponse } from '../../utils/response';
 import { createGoogleImage } from './createImage';
@@ -287,6 +288,7 @@ export class LobeGoogleAI implements LobeRuntimeAI {
       return StreamingResponse(stream, { headers: options?.headers });
     } catch (e) {
       const err = e as Error;
+      logRawError({ baseURL: this.baseURL, error: e, model: rawPayload.model, operation: 'chat', provider: this.provider });
 
       // Remove previous silent handling, throw error uniformly
       if (isAbortError(err)) {
@@ -327,31 +329,36 @@ export class LobeGoogleAI implements LobeRuntimeAI {
    * @see https://ai.google.dev/gemini-api/docs/function-calling
    */
   async generateObject(payload: GenerateObjectPayload, options?: GenerateObjectOptions) {
-    // Convert OpenAI messages to Google format
-    const contents = await buildGoogleMessages(payload.messages);
-    const pricing = await getModelPricing(payload.model, this.provider);
+    try {
+      // Convert OpenAI messages to Google format
+      const contents = await buildGoogleMessages(payload.messages);
+      const pricing = await getModelPricing(payload.model, this.provider);
 
-    // Handle tools-based structured output
-    if (payload.tools && payload.tools.length > 0) {
-      return createGoogleGenerateObjectWithTools(
-        this.client,
-        { contents, model: payload.model, tools: payload.tools },
-        options,
-        pricing,
-      );
+      // Handle tools-based structured output
+      if (payload.tools && payload.tools.length > 0) {
+        return createGoogleGenerateObjectWithTools(
+          this.client,
+          { contents, model: payload.model, tools: payload.tools },
+          options,
+          pricing,
+        );
+      }
+
+      // Handle schema-based structured output
+      if (payload.schema) {
+        return createGoogleGenerateObject(
+          this.client,
+          { contents, model: payload.model, schema: payload.schema },
+          options,
+          pricing,
+        );
+      }
+
+      return undefined;
+    } catch (error) {
+      logRawError({ baseURL: this.baseURL, error, model: payload.model, operation: 'generateObject', provider: this.provider });
+      throw error;
     }
-
-    // Handle schema-based structured output
-    if (payload.schema) {
-      return createGoogleGenerateObject(
-        this.client,
-        { contents, model: payload.model, schema: payload.schema },
-        options,
-        pricing,
-      );
-    }
-
-    return undefined;
   }
 
   private createEnhancedStream(originalStream: any, signal: AbortSignal): ReadableStream {

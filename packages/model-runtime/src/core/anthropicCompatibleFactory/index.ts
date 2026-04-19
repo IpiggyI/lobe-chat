@@ -20,6 +20,7 @@ import { AgentRuntimeErrorType } from '../../types/error';
 import { AgentRuntimeError } from '../../utils/createError';
 import { debugStream } from '../../utils/debugStream';
 import { desensitizeUrl } from '../../utils/desensitizeUrl';
+import { logRawError } from '../../utils/rawCallLogger';
 import { getModelPricing } from '../../utils/getModelPricing';
 import { MODEL_LIST_CONFIGS, processModelList } from '../../utils/modelParse';
 import { StreamingResponse } from '../../utils/response';
@@ -652,6 +653,7 @@ export const createAnthropicCompatibleRuntime = <T extends Record<string, any> =
           },
         );
       } catch (error) {
+        logRawError({ baseURL: this.baseURL, error, model: payload.model, operation: 'chat', provider: this.id });
         throw this.handleError(error);
       }
     }
@@ -665,6 +667,7 @@ export const createAnthropicCompatibleRuntime = <T extends Record<string, any> =
         const pricing = await getModelPricing(payload.model, this.id);
         return await generateObject(this.client, payload, options, pricing);
       } catch (error) {
+        logRawError({ baseURL: this.baseURL, error, model: payload.model, operation: 'generateObject', provider: this.id });
         throw this.handleError(error);
       }
     }
