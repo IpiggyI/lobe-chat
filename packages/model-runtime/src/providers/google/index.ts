@@ -24,7 +24,7 @@ import { type CreateVideoPayload, type CreateVideoResponse } from '../../types/v
 import { AgentRuntimeError } from '../../utils/createError';
 import { debugStream } from '../../utils/debugStream';
 import { getModelPricing } from '../../utils/getModelPricing';
-import { logRawError } from '../../utils/rawCallLogger';
+import { logRawError, logRawRequest } from '../../utils/rawCallLogger';
 import { parseGoogleErrorMessage } from '../../utils/googleErrorParser';
 import { StreamingResponse } from '../../utils/response';
 import { createGoogleImage } from './createImage';
@@ -265,6 +265,8 @@ export class LobeGoogleAI implements LobeRuntimeAI {
         log('[requestPayload]');
         log(JSON.stringify(finalPayload), '\n');
       }
+
+      logRawRequest({ baseURL: this.baseURL, model, operation: 'chat', payload: finalPayload, provider: this.provider });
 
       const geminiStreamResponse = await this.client.models.generateContentStream(finalPayload);
 

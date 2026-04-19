@@ -10,6 +10,14 @@ interface LogRawErrorParams {
   provider: string;
 }
 
+interface LogRawRequestParams {
+  baseURL?: string;
+  model?: string;
+  operation: 'chat' | 'generateObject' | 'embeddings';
+  payload: unknown;
+  provider: string;
+}
+
 const SENSITIVE_KEY_PATTERN =
   /^(apikey|api_key|token|secret|password|credential|authorization|bearer|api-key|ocp-apim-subscription-key|x-api-key|auth|key)$/i;
 
@@ -98,6 +106,62 @@ function isProviderEnabled(provider: string): boolean {
 }
 
 /**
+ * Summarize a request payload for safe-mode logging.
+ * Strips message content but keeps structural info (count, roles, content lengths).
+ */
+function summarizePayload(payload: unknown): unknown {
+  if (!payload || typeof payload !== 'object') return payload;
+
+  const obj = payload as Record<string, unknown>;
+  const result: Record<string, unknown> = {};
+
+  for (const [key, value] of Object.entries(obj)) {
+    // Summarize messages array (OpenAI/Anthropic format)
+    if (key === 'messages' && Array.isArray(value)) {
+      result[key] = {
+        count: value.length,
+        roles: value.map((m: any) => ({
+          contentLength: typeof m.content === 'string' ? m.content.length : JSON.stringify(m.content ?? '').length,
+          role: m.role,
+        })),
+      };
+      continue;
+    }
+
+    // Summarize contents array (Google format)
+    if (key === 'contents' && Array.isArray(value)) {
+      result[key] = {
+        count: value.length,
+        roles: value.map((c: any) => ({
+          partsCount: Array.isArray(c.parts) ? c.parts.length : 0,
+          role: c.role,
+        })),
+      };
+      continue;
+    }
+
+    // Summarize tools array
+    if (key === 'tools' && Array.isArray(value)) {
+      result[key] = { count: value.length };
+      continue;
+    }
+
+    // Redact system instruction content
+    if (key === 'systemInstruction' || key === 'system') {
+      result[key] = typeof value === 'string'
+        ? `[${value.length} chars]`
+        : value ? '[present]' : value;
+      continue;
+    }
+
+    // Pass through scalar config params (model, temperature, max_tokens, stream, etc.)
+    result[key] = value;
+  }
+
+  return result;
+}
+
+/**
  * Log raw SDK error before it gets transformed by handleError.
  * Controlled by DEBUG_MODEL_RUNTIME_RAW env var (off | safe | full).
  */
@@ -121,5 +185,34 @@ export function logRawError(params: LogRawErrorParams): void {
     console.error('[model-runtime:raw:error]', JSON.stringify(event));
   } catch {
     // Never let logging break the error handling flow
+  }
+}
+
+/**
+ * Log raw request payload before SDK call.
+ * In safe mode, message content is summarized (counts + lengths only).
+ * In full mode, the complete payload is logged for curl replay.
+ * Controlled by DEBUG_MODEL_RUNTIME_RAW env var (off | safe | full).
+ */
+export function logRawRequest(params: LogRawRequestParams): void {
+  const mode = getMode();
+  if (mode === 'off') return;
+  if (!isProviderEnabled(params.provider)) return;
+
+  try {
+    const event = {
+      baseURL: mode === 'safe' && params.baseURL ? desensitizeUrl(params.baseURL) : params.baseURL,
+      event: 'request' as const,
+      mode,
+      model: params.model,
+      operation: params.operation,
+      payload: mode === 'safe' ? summarizePayload(params.payload) : params.payload,
+      provider: params.provider,
+      timestamp: new Date().toISOString(),
+    };
+
+    console.log('[model-runtime:raw:request]', JSON.stringify(event));
+  } catch {
+    // Never let logging break the request flow
   }
 }
