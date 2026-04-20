@@ -62,7 +62,7 @@ const Token = memo(() => {
     (s) => chatConfigByIdSelectors.getChatConfigById(agentId)(s).skillActivateMode,
   );
   const userSkillMode = useUserStore(userToolSettingsSelectors.skillActivateMode);
-  const skillActivateMode = agentSkillMode ?? userSkillMode ?? 'auto';
+  const skillActivateMode = agentSkillMode ?? userSkillMode ?? 'manual';
 
   const toolsString = useToolStore(() => {
     const toolsEngine = createAgentToolsEngine({ model, provider });

@@ -74,7 +74,7 @@ const getRuntimeModeById =
 const getSkillActivateModeById =
   (agentId: string) =>
   (s: AgentStoreState): 'auto' | 'manual' =>
-    getChatConfigById(agentId)(s).skillActivateMode ?? 'auto';
+    getChatConfigById(agentId)(s).skillActivateMode ?? 'manual';
 
 export const chatConfigByIdSelectors = {
   getChatConfigById,
