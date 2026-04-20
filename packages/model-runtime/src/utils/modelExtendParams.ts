@@ -254,8 +254,10 @@ export const applyModelExtendParams = (ctx: ApplyModelExtendParamsContext): Mode
     }
   }
 
-  if (modelExtendParams.includes('effort') && chatConfig.effort) {
-    extendParams.effort = chatConfig.effort;
+  // See-what-you-send: the ControlsForm effort slider defaults to high, so an
+  // unset config must send high too.
+  if (modelExtendParams.includes('effort')) {
+    extendParams.effort = chatConfig.effort || 'high';
   }
 
   if (modelExtendParams.includes('opus47Effort') && chatConfig.opus47Effort) {

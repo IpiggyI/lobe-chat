@@ -1978,6 +1978,11 @@ export class AiAgentService {
     } catch (error) {
       log('execAgent: failed to fetch user settings: %O', error);
     }
+
+    // Resolve skill mode early — needed by both AgentToolsEngine and tool discovery
+    const resolvedSkillMode: 'auto' | 'manual' =
+      agentConfig.chatConfig?.skillActivateMode ?? userSkillActivateMode ?? 'auto';
+
     log(
       'execAgent: globalMemoryEnabled=%s, timezone=%s, disabledBuiltinTools=%d',
       globalMemoryEnabled,
@@ -2378,6 +2383,7 @@ export class AiAgentService {
         executionPlan,
         globalMemoryEnabled,
         hasEnabledKnowledgeBases,
+        skillActivateMode: resolvedSkillMode,
         isBotConversation,
         isGroupSupervisor,
         // Context-aware builtin manifests: inside a sub-agent (or group) run,
@@ -2409,10 +2415,7 @@ export class AiAgentService {
 
       // When skillActivateMode is 'manual', exclude discovery tools (lobe-activator, lobe-skill-store).
       // Additionally exclude lobe-skills unless user explicitly selected skills (bridge mode).
-      // Fallback chain: per-agent config → user-level default → 'auto'
-      const resolvedSkillMode = agentConfig.chatConfig?.skillActivateMode
-        ?? userSkillActivateMode
-        ?? 'auto';
+      // resolvedSkillMode is computed earlier (step 4) for reuse across tool engine + discovery
       const isManualMode = resolvedSkillMode === 'manual';
 
       let hasExplicitSkills = false;
@@ -2703,7 +2706,7 @@ export class AiAgentService {
     // - availableProviders / availablePlugins are only built when the tool is explicitly
     //   enabled, since they're solely needed for createAgent / updateAgent.
     const isAgentManagementEnabled = toolsResult.enabledToolIds?.includes('lobe-agent-management');
-    const isInAutoSkillMode = (agentConfig.chatConfig?.skillActivateMode ?? userSkillActivateMode ?? 'manual') !== 'manual';
+    const isInAutoSkillMode = resolvedSkillMode !== 'manual';
     const shouldInjectAvailableAgents = isInAutoSkillMode || isAgentManagementEnabled;
     let agentManagementContext: AgentManagementContext | undefined;
 

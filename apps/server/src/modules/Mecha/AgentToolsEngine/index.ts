@@ -22,6 +22,7 @@ import {
   chatModeAllowedToolIds,
   defaultToolIds,
   groupSupervisorToolIds,
+  runtimeManagedToolIds,
 } from '@lobechat/builtin-tools';
 import { createEnableChecker, type LobeToolManifest } from '@lobechat/context-engine';
 import { ToolsEngine } from '@lobechat/context-engine';
@@ -156,6 +157,7 @@ export const createServerAgentToolsEngine = (
     executionPlan,
     globalMemoryEnabled = false,
     hasEnabledKnowledgeBases = false,
+    skillActivateMode,
     isBotConversation = false,
     isGroupSupervisor = false,
     manifestContext,
@@ -279,6 +281,10 @@ export const createServerAgentToolsEngine = (
       !deviceContext?.autoActivated &&
       !deviceContext?.boundDeviceId,
     [WebBrowsingManifest.identifier]: isSearchEnabled,
+    // Manual mode: suppress all runtime-managed tools (zero auto-injection)
+    ...(skillActivateMode === 'manual'
+      ? Object.fromEntries(runtimeManagedToolIds.map((id) => [id, false]))
+      : {}),
     // Global disable overrides all above (must be last to take precedence)
     ...Object.fromEntries(disabledBuiltinToolIds.map((id) => [id, false])),
   };

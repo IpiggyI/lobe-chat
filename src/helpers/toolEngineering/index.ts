@@ -6,7 +6,12 @@ import { KnowledgeBaseManifest } from '@lobechat/builtin-tool-knowledge-base';
 import { LocalSystemManifest } from '@lobechat/builtin-tool-local-system';
 import { MemoryManifest } from '@lobechat/builtin-tool-memory';
 import { WebBrowsingManifest } from '@lobechat/builtin-tool-web-browsing';
-import { alwaysOnToolIds, chatModeAllowedToolIds, defaultToolIds } from '@lobechat/builtin-tools';
+import {
+  alwaysOnToolIds,
+  chatModeAllowedToolIds,
+  defaultToolIds,
+  runtimeManagedToolIds,
+} from '@lobechat/builtin-tools';
 import { createEnableChecker, type PluginEnableChecker } from '@lobechat/context-engine';
 import { ToolsEngine } from '@lobechat/context-engine';
 import {
@@ -226,6 +231,10 @@ export const createAgentToolsEngine = (
     [LocalSystemManifest.identifier]: agentChatConfigSelectors.isLocalSystemEnabled(agentState),
     [MemoryManifest.identifier]: memoryEnabled,
     [WebBrowsingManifest.identifier]: webBrowsingEnabled,
+    // Manual mode: suppress all runtime-managed tools (zero auto-injection)
+    ...(agentChatConfigSelectors.skillActivateMode(agentState) === 'manual'
+      ? Object.fromEntries(runtimeManagedToolIds.map((id) => [id, false]))
+      : {}),
     // Global disable overrides all above (must be last to take precedence)
     ...Object.fromEntries(uninstalled.map((id) => [id, false])),
   };
