@@ -247,8 +247,8 @@ export const resolveModelExtendParams = (ctx: ModelParamsContext): ModelExtendPa
     }
   }
 
-  if (modelExtendParams.includes('effort') && chatConfig.effort) {
-    extendParams.effort = chatConfig.effort;
+  if (modelExtendParams.includes('effort')) {
+    extendParams.effort = chatConfig.effort || 'high';
   }
 
   if (modelExtendParams.includes('opus47Effort') && chatConfig.opus47Effort) {

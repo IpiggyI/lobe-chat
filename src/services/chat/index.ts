@@ -38,6 +38,7 @@ import {
   lobehubSkillStoreSelectors,
 } from '@/store/tool/selectors';
 import { getUserStoreState, useUserStore } from '@/store/user';
+import { userToolSettingsSelectors } from '@/store/user/selectors';
 import {
   settingsSelectors,
   userGeneralSettingsSelectors,
@@ -180,7 +181,19 @@ class ChatService {
     // Note: When Agent Builder is active, we need to get the context of the agent being edited,
     // which is stored in chatStore.activeAgentId, not the targetAgentId (which is the Agent Builder itself)
     const isAgentBuilderEnabled = enabledToolIds.includes(AgentBuilderIdentifier);
-    const documentsAgentId = this.resolveAgentDocumentsTargetId(targetAgentId, enabledToolIds);
+
+    // In manual mode, skip runtime-managed tools (including agent-documents)
+    // unless the user explicitly selected them
+    const resolvedSkillMode =
+      chatConfig.skillActivateMode ??
+      userToolSettingsSelectors.skillActivateMode(getUserStoreState()) ??
+      'auto';
+    const isManualMode = resolvedSkillMode === 'manual';
+
+    const documentsAgentId =
+      isManualMode && !enabledToolIds.includes('lobe-agent-documents')
+        ? undefined
+        : this.resolveAgentDocumentsTargetId(targetAgentId, enabledToolIds);
     let agentBuilderContext;
     let agentDocuments = documentsAgentId
       ? agentSelectors.getAgentDocumentsById(documentsAgentId)(getAgentStoreState())

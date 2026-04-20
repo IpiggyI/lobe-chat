@@ -91,6 +91,8 @@ export interface ServerCreateAgentToolsEngineParams {
   globalMemoryEnabled?: boolean;
   /** Whether agent has agent documents */
   hasAgentDocuments?: boolean;
+  /** Resolved skill activate mode — when 'manual', runtime-managed tools are suppressed */
+  skillActivateMode?: 'auto' | 'manual';
   /** Whether agent has enabled knowledge bases */
   hasEnabledKnowledgeBases?: boolean;
   /** Whether the request originates from a bot conversation (auto-enables message tool) */
