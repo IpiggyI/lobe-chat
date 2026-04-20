@@ -2703,7 +2703,7 @@ export class AiAgentService {
     // - availableProviders / availablePlugins are only built when the tool is explicitly
     //   enabled, since they're solely needed for createAgent / updateAgent.
     const isAgentManagementEnabled = toolsResult.enabledToolIds?.includes('lobe-agent-management');
-    const isInAutoSkillMode = (agentConfig.chatConfig?.skillActivateMode ?? userSkillActivateMode ?? 'auto') !== 'manual';
+    const isInAutoSkillMode = (agentConfig.chatConfig?.skillActivateMode ?? userSkillActivateMode ?? 'manual') !== 'manual';
     const shouldInjectAvailableAgents = isInAutoSkillMode || isAgentManagementEnabled;
     let agentManagementContext: AgentManagementContext | undefined;
 
