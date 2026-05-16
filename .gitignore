@@ -155,3 +155,7 @@ docs/superpowers/
 
 # Kagura agent runtime
 .kagura/
+
+# Local tooling caches
+.ace-tool/
+.vercel
