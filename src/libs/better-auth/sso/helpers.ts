@@ -2,8 +2,18 @@ import { type GenericOAuthConfig } from 'better-auth/plugins';
 
 export const DEFAULT_OIDC_SCOPES = ['openid', 'email', 'profile'];
 
+const URL_PROTOCOL_REGEX = /^[\w+.-]+:\/\//;
+
+const normalizeIssuerUrl = (issuer: string) => {
+  const normalized = issuer.trim().replace(/\/+$/, '');
+
+  return URL_PROTOCOL_REGEX.test(normalized)
+    ? normalized
+    : `https://${normalized.replace(/^\/+/, '')}`;
+};
+
 const createDiscoveryUrl = (issuer: string) => {
-  const normalized = issuer.replace(/\/$/, '');
+  const normalized = normalizeIssuerUrl(issuer);
   return normalized.includes('/.well-known/')
     ? normalized
     : `${normalized}/.well-known/openid-configuration`;
@@ -28,14 +38,11 @@ export const buildOidcConfig = ({
   pkce = true,
   overrides,
 }: OIDCProviderInput): GenericOAuthConfig => {
-  const sanitizedIssuer = issuer?.trim();
-
-  if (!clientId || !clientSecret || !sanitizedIssuer) {
+  if (!clientId || !clientSecret || !issuer?.trim()) {
     throw new Error(`[Better-Auth] ${providerId} OAuth enabled but missing credentials`);
   }
 
-  const normalizedIssuer = sanitizedIssuer.replace(/\/$/, '');
-  const discoveryUrl = createDiscoveryUrl(normalizedIssuer);
+  const discoveryUrl = createDiscoveryUrl(issuer);
 
   return {
     clientId,
