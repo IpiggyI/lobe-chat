@@ -85,6 +85,13 @@ function sharedManualChunks(id: string): string | undefined {
   // circular chunk dependencies between store.ts ↔ index.ts barrel re-exports.
   if (id.includes('/src/store/') && !id.includes('node_modules')) return 'app-stores';
 
+  // _auth.ts is BOTH statically imported (services/models.ts, chat/index.ts,
+  // chat/mecha/clientModelRuntime.ts) AND dynamically imported (trpc/client/lambda.ts
+  // and tools.ts, to break a circular dep with @/store/aiInfra → services/aiProvider
+  // → trpc/client). Without a dedicated chunk, Rolldown emits `await import(null)`
+  // for the dynamic-import sites since the module is already in the parent chunk.
+  if (id.match(/\/services\/_auth\.ts$/)) return 'services-auth';
+
   if (!id.includes('node_modules')) return;
 
   // antd locale → merge into i18n-{locale}
