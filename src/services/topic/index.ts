@@ -18,9 +18,20 @@ type UpdateTopicMetadataInput = Omit<Partial<ChatTopicMetadata>, 'onboardingSess
 
 export class TopicService {
   createTopic = (params: CreateTopicParams): Promise<string> => {
+    // Callers (createTopic / saveToTopic / createEphemeralTopic) pass the
+    // active agent id through `params.sessionId` — a legacy from when the
+    // store keyed conversations by sessionId. Now `activeAgentId` is the
+    // route's agent id, so forwarding it as session_id would violate the
+    // topics.session_id FK to sessions(id). Re-route it as `agentId` so
+    // the backend's resolveContext resolves the real sessionId via
+    // agentsToSessions. Inbox keeps its null-sessionId fast path.
+    const sessionField = params.sessionId;
+    const sessionHoldsAgentId = !!sessionField && sessionField !== INBOX_SESSION_ID;
+
     return lambdaClient.topic.createTopic.mutate({
       ...params,
-      sessionId: this.toDbSessionId(params.sessionId),
+      agentId: sessionHoldsAgentId ? sessionField : undefined,
+      sessionId: sessionHoldsAgentId ? null : this.toDbSessionId(sessionField),
     });
   };
 
