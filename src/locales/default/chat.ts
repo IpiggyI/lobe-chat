@@ -196,6 +196,18 @@ export default {
   'inactive': 'Inactive',
   'inbox.desc': 'Collaborate in one Workspace and move ideas into outcomes.',
   'inbox.title': 'Lobe AI',
+  'incognito.action.discard': 'Discard',
+  'incognito.action.keep': 'Keep Chatting',
+  'incognito.action.save': 'Save to Chats',
+  'incognito.banner.description':
+    "This chat is temporary. Messages won't be auto-titled or shown in the sidebar, and will be cleared after 24 hours.",
+  'incognito.banner.title': 'Incognito Chat',
+  'incognito.dialog.discard.description':
+    'All messages in this temporary chat will be permanently deleted. This action cannot be undone.',
+  'incognito.dialog.discard.title': 'Discard temporary chat?',
+  'incognito.sidebar.button': 'Start Incognito Chat',
+  'incognito.toast.discarded': 'Chat discarded',
+  'incognito.toast.saved': 'Saved to your chat history',
   'input.addAi': 'Add an AI message',
   'input.addUser': 'Add a user message',
   'input.costEstimate.creditsPerMillionTokens': '{{credits}} credits/M tokens',

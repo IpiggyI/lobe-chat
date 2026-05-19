@@ -5,6 +5,7 @@ import { cssVar } from 'antd-style';
 import debug from 'debug';
 import { memo, Suspense, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 
 import AgentHome from '@/features/AgentHome';
 import ChatMiniMap from '@/features/ChatMiniMap';
@@ -21,6 +22,7 @@ import { threadSelectors, topicSelectors } from '@/store/chat/selectors';
 import { messageMapKey } from '@/store/chat/utils/messageMapKey';
 
 import HeterogeneousChatInput from './HeterogeneousChatInput';
+import IncognitoBanner from './IncognitoBanner';
 import MainChatInput from './MainChatInput';
 import MessageFromUrl from './MainChatInput/MessageFromUrl';
 import ThreadHydration from './ThreadHydration';
@@ -83,6 +85,15 @@ const Conversation = memo(() => {
 
   const hooks = useMemo(() => mergeConversationHooks(chatFollowUpHooks), [chatFollowUpHooks]);
 
+  // Incognito banner visibility: trust the persisted topic.mode first; the URL
+  // flag (?mode=incognito) is only a fallback for the moment between topic
+  // creation and store hydration, so the banner doesn't flicker on first paint.
+  const [searchParams] = useSearchParams();
+  const activeTopicMode = useChatStore((s) =>
+    context.topicId ? topicSelectors.getTopicById(context.topicId)(s)?.mode : undefined,
+  );
+  const isIncognito = activeTopicMode === 'temp' || searchParams.get('mode') === 'incognito';
+
   return (
     <ConversationProvider
       actionsBar={actionsBarConfig}
@@ -96,6 +107,7 @@ const Conversation = memo(() => {
       }}
     >
       <ZenModeToast />
+      {isIncognito && <IncognitoBanner />}
       <Flexbox
         flex={1}
         width={'100%'}

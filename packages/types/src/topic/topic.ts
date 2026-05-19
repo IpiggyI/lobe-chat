@@ -188,6 +188,8 @@ export type ChatTopicStatus =
   | 'completed'
   | 'archived';
 
+export type ChatTopicMode = 'default' | 'temp' | 'test';
+
 export interface ChatTopic extends Omit<BaseDataModel, 'meta'> {
   completedAt?: Date | null;
   /** Server-side mock until real cost aggregation lands. */
@@ -200,6 +202,7 @@ export interface ChatTopic extends Omit<BaseDataModel, 'meta'> {
   /** Total message count for the topic. */
   messageCount?: number | null;
   metadata?: ChatTopicMetadata;
+  mode?: ChatTopicMode | null;
   sessionId?: string;
   status?: ChatTopicStatus | null;
   title: string;
@@ -248,6 +251,7 @@ export interface CreateTopicParams {
   favorite?: boolean;
   groupId?: string | null;
   messages?: string[];
+  mode?: ChatTopicMode;
   sessionId?: string | null;
   title: string;
   trigger?: string;

@@ -40,6 +40,30 @@ describe('topicRouter', () => {
     expect(result.id).toBe('topic1');
   });
 
+  it('should forward the mode field when creating an ephemeral topic', async () => {
+    const mockCreate = vi.fn().mockResolvedValue({ id: 'topic-temp' });
+    vi.mocked(TopicModel).mockImplementation(
+      () =>
+        ({
+          create: mockCreate,
+        }) as any,
+    );
+
+    const input = {
+      sessionId: 'session1',
+      title: 'Incognito',
+      mode: 'temp' as const,
+    };
+
+    const ctx = {
+      topicModel: new TopicModel({} as any, 'user1'),
+    };
+
+    await ctx.topicModel.create(input);
+
+    expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({ mode: 'temp' }));
+  });
+
   it('should handle getTopics with groupId', async () => {
     const mockQuery = vi
       .fn()

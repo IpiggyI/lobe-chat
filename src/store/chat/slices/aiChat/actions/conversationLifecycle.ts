@@ -914,6 +914,16 @@ export class ConversationLifecycleActionImpl {
     const shouldSliceTopicTitle = __DEV__ && process.env.NEXT_PUBLIC_DEV_DISABLE_AUTO_TOPIC === '1';
 
     const applyTopicTitle = async (topicId: string, messages: UIChatMessage[]) => {
+      // Defense-in-depth guard for incognito chats: the dev-slicing branch below would
+      // otherwise rewrite the topic.title with the user's first message, leaking
+      // private content into the persisted record even though `summaryTopicTitle`
+      // already short-circuits temp topics.
+      const topic = topicSelectors.getTopicById(topicId)(this.#get());
+      if (topic?.mode === 'temp') {
+        this.#get().internal_updateTopicLoading(topicId, false);
+        return;
+      }
+
       if (!shouldSliceTopicTitle) {
         await this.#get().summaryTopicTitle(topicId, messages);
         return;

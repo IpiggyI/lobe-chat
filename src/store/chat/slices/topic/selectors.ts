@@ -29,12 +29,19 @@ const currentTopicData = (s: ChatStoreState): TopicData | undefined => {
 
 const currentTopics = (s: ChatStoreState): ChatTopic[] | undefined => currentTopicData(s)?.items;
 
-// Get topics without cron-triggered ones
+// Topics that belong in the standard sidebar / counts: not cron-triggered and not ephemeral (incognito).
+const isVisibleTopic = (topic: ChatTopic) => topic.trigger !== 'cron' && topic.mode !== 'temp';
+
+// Get topics without cron-triggered or ephemeral ones
 const currentTopicsWithoutCron = (s: ChatStoreState): ChatTopic[] | undefined => {
   const topics = currentTopics(s);
   if (!topics) return undefined;
-  return topics.filter((topic) => topic.trigger !== 'cron');
+  return topics.filter(isVisibleTopic);
 };
+
+// Ephemeral (incognito) topics for the current container — reserved for future secondary lists.
+const ephemeralTopics = (s: ChatStoreState): ChatTopic[] =>
+  currentTopics(s)?.filter((topic) => topic.mode === 'temp') || [];
 
 const currentActiveTopic = (s: ChatStoreState): ChatTopic | undefined => {
   return currentTopics(s)?.find((topic) => topic.id === s.activeTopicId);
@@ -220,6 +227,7 @@ export const topicSelectors = {
   currentUnFavTopics,
   displayTopics,
   displayTopicsForSidebar,
+  ephemeralTopics,
   getTopicById,
   getTopicsByAgentId,
   groupedTopicsForSidebar,

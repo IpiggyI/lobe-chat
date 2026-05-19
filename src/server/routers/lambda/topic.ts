@@ -14,6 +14,7 @@ import { TopicShareModel } from '@/database/models/topicShare';
 import { AgentMigrationRepo } from '@/database/repositories/agentMigration';
 import { TopicImporterRepo } from '@/database/repositories/topicImporter';
 import { agents, chatGroups, chatGroupsAgents } from '@/database/schemas';
+import { cleanupTempTopics } from '@/database/server/services/cleanup-temp-topics';
 import { authedProcedure, router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
 import { type BatchTaskResult } from '@/types/service';
@@ -89,6 +90,7 @@ export const topicRouter = router({
             favorite: z.boolean().optional(),
             id: z.string().optional(),
             messages: z.array(z.string()).optional(),
+            mode: z.enum(['default', 'temp', 'test']).optional(),
             title: z.string(),
           })
           .extend(basicContextSchema.shape),
@@ -173,6 +175,7 @@ export const topicRouter = router({
           favorite: z.boolean().optional(),
           groupId: z.string().nullable().optional(),
           messages: z.array(z.string()).optional(),
+          mode: z.enum(['default', 'temp', 'test']).optional(),
           title: z.string(),
           trigger: z.string().optional(),
         })
@@ -314,6 +317,16 @@ export const topicRouter = router({
 
       // Use Next.js after() for non-blocking execution
       after(runMigration);
+
+      // Opportunistic cleanup of expired incognito topics. Runs after the response
+      // ships so it never adds latency; follows the same pattern as runMigration.
+      after(async () => {
+        try {
+          await cleanupTempTopics(ctx.serverDB, { userId: ctx.userId });
+        } catch (error) {
+          console.error('[topic:getTopics] cleanupTempTopics failed:', error);
+        }
+      });
 
       return { items: result.items, total: result.total };
     }),
@@ -557,6 +570,7 @@ export const topicRouter = router({
               provider: z.string().optional(),
             })
             .optional(),
+          mode: z.enum(['default', 'temp', 'test']).optional(),
           sessionId: z.string().optional(),
           status: z
             .enum([

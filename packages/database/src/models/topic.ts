@@ -1,5 +1,6 @@
 import type {
   ChatTopicMetadata,
+  ChatTopicMode,
   ChatTopicStatus,
   DBMessageItem,
   TopicRankItem,
@@ -46,6 +47,7 @@ export interface CreateTopicParams {
   groupId?: string | null;
   messages?: string[];
   metadata?: ChatTopicMetadata;
+  mode?: ChatTopicMode;
   sessionId?: string | null;
   title?: string;
   trigger?: string | null;
@@ -225,6 +227,7 @@ export class TopicModel {
                 historySummary: topics.historySummary,
                 id: topics.id,
                 metadata: topics.metadata,
+                mode: topics.mode,
                 status: topics.status,
                 title: topics.title,
                 updatedAt: topics.updatedAt,
@@ -322,6 +325,7 @@ export class TopicModel {
                 historySummary: topics.historySummary,
                 id: topics.id,
                 metadata: topics.metadata,
+                mode: topics.mode,
                 status: topics.status,
                 title: topics.title,
                 updatedAt: topics.updatedAt,
@@ -379,6 +383,7 @@ export class TopicModel {
               historySummary: topics.historySummary,
               id: topics.id,
               metadata: topics.metadata,
+              mode: topics.mode,
               sessionId: topics.sessionId,
               status: topics.status,
               title: topics.title,
@@ -434,6 +439,10 @@ export class TopicModel {
 
     const bm25Query = sanitizeBm25Query(keyword);
 
+    // Exclude ephemeral (incognito) topics from search results across all entry points.
+    // `mode IS NULL` covers legacy rows written before the column was introduced.
+    const excludeEphemeral = or(isNull(topics.mode), ne(topics.mode, 'temp'));
+
     // Run title and message content searches in parallel
     const [topicsByTitle, topicIdsByMessages] = await Promise.all([
       // Query topics matching by title (BM25)
@@ -444,6 +453,7 @@ export class TopicModel {
           and(
             eq(topics.userId, this.userId),
             this.matchContainer(containerId),
+            excludeEphemeral,
             sql`${topics.title} @@@ ${bm25Query}`,
           ),
         )
@@ -459,6 +469,7 @@ export class TopicModel {
             sql`${messages.content} @@@ ${bm25Query}`,
             eq(topics.userId, this.userId),
             this.matchContainer(containerId),
+            excludeEphemeral,
           ),
         )
         .groupBy(messages.topicId),
@@ -475,7 +486,7 @@ export class TopicModel {
 
     const topicsByMessages = await this.db.query.topics.findMany({
       orderBy: [desc(topics.updatedAt)],
-      where: and(eq(topics.userId, this.userId), inArray(topics.id, topicIds)),
+      where: and(eq(topics.userId, this.userId), inArray(topics.id, topicIds), excludeEphemeral),
     });
 
     // Merge results and deduplicate
@@ -587,6 +598,8 @@ export class TopicModel {
       .where(
         and(
           eq(topics.userId, this.userId),
+          // Exclude ephemeral (incognito) topics from the homepage recents
+          or(isNull(topics.mode), ne(topics.mode, 'temp')),
           or(
             // Group topics: has groupId
             not(isNull(topics.groupId)),
@@ -618,6 +631,7 @@ export class TopicModel {
       agentId: params.agentId || null,
       groupId: params.groupId || null,
       id,
+      mode: params.mode ?? 'default',
       sessionId: params.sessionId || null,
       userId: this.userId,
     };
@@ -686,6 +700,7 @@ export class TopicModel {
             favorite: params.favorite,
             groupId: params.sessionId ? null : params.groupId,
             id: params.id || this.genId(),
+            mode: params.mode ?? 'default',
             sessionId: params.groupId ? null : params.sessionId,
             title: params.title,
             trigger: params.trigger,
