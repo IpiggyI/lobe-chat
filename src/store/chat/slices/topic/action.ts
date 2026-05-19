@@ -144,6 +144,50 @@ export class ChatTopicActionImpl {
     return topicId;
   };
 
+  createEphemeralTopic = async (sessionId?: string): Promise<string | undefined> => {
+    const { activeAgentId, activeGroupId, internal_createTopic, switchTopic } = this.#get();
+    if (!activeAgentId && !activeGroupId) return;
+
+    const topicId = await internal_createTopic({
+      groupId: activeGroupId,
+      mode: 'temp',
+      sessionId: activeGroupId ? null : sessionId || activeAgentId,
+      title: t('defaultTitle', { ns: 'topic' }),
+    });
+
+    await switchTopic(topicId, { clearNewKey: true, skipRefreshMessage: true });
+    return topicId;
+  };
+
+  saveEphemeralTopic = async (topicId: string): Promise<void> => {
+    const {
+      activeAgentId,
+      activeGroupId,
+      internal_updateTopic,
+      refreshTopic,
+      summaryTopicTitle,
+    } = this.#get();
+    const topic = topicSelectors.getTopicById(topicId)(this.#get());
+    if (!topic || topic.mode !== 'temp') return;
+
+    // Flip the mode first — otherwise `summaryTopicTitle` will skip itself
+    // because of the temp guard added in Phase B.
+    await internal_updateTopic(topicId, { mode: 'default' });
+
+    const messages = await messageService.getMessages({
+      agentId: activeAgentId,
+      groupId: activeGroupId,
+      topicId,
+    });
+    if (messages.length > 0) await summaryTopicTitle(topicId, messages);
+
+    await refreshTopic();
+  };
+
+  discardEphemeralTopic = async (topicId: string): Promise<void> => {
+    return this.#get().removeTopic(topicId);
+  };
+
   duplicateTopic = async (id: string): Promise<void> => {
     const { refreshTopic, switchTopic } = this.#get();
 
@@ -203,6 +247,13 @@ export class ChatTopicActionImpl {
     const { internal_updateTopicTitleInSummary, internal_updateTopicLoading } = this.#get();
     const topic = topicSelectors.getTopicById(topicId)(this.#get());
     if (!topic) return;
+
+    // Incognito chats keep their default title. Bail out before triggering the LLM
+    // summarizer so the topic name stays neutral end-to-end (primary guard).
+    if (topic.mode === 'temp') {
+      internal_updateTopicLoading(topicId, false);
+      return;
+    }
 
     internal_updateTopicTitleInSummary(topicId, LOADING_FLAT);
 

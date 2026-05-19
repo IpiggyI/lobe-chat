@@ -148,6 +148,54 @@ describe('topicSelectors', () => {
       const topics = topicSelectors.displayTopics(state);
       expect(topics).toEqual(topicItems);
     });
+
+    it('should exclude ephemeral (mode=temp) and cron-triggered topics', () => {
+      const mixed = [
+        { id: 'normal', favorite: false },
+        { id: 'cron', favorite: false, trigger: 'cron' },
+        { id: 'temp', favorite: false, mode: 'temp' },
+      ];
+      const state = merge(initialStore, {
+        topicDataMap: {
+          [topicMapKey({ agentId: 'test' })]: {
+            items: mixed,
+            total: mixed.length,
+            currentPage: 0,
+            hasMore: false,
+            pageSize: 20,
+          },
+        },
+        activeAgentId: 'test',
+      });
+
+      const topics = topicSelectors.displayTopics(state);
+      expect(topics?.map((t) => t.id)).toEqual(['normal']);
+    });
+  });
+
+  describe('ephemeralTopics', () => {
+    it('should return only mode=temp topics', () => {
+      const mixed = [
+        { id: 'normal', favorite: false },
+        { id: 'temp1', favorite: false, mode: 'temp' },
+        { id: 'temp2', favorite: false, mode: 'temp' },
+      ];
+      const state = merge(initialStore, {
+        topicDataMap: {
+          [topicMapKey({ agentId: 'test' })]: {
+            items: mixed,
+            total: mixed.length,
+            currentPage: 0,
+            hasMore: false,
+            pageSize: 20,
+          },
+        },
+        activeAgentId: 'test',
+      });
+
+      const topics = topicSelectors.ephemeralTopics(state);
+      expect(topics.map((t) => t.id)).toEqual(['temp1', 'temp2']);
+    });
   });
 
   describe('searchTopics', () => {

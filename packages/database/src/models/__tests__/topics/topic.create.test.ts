@@ -68,7 +68,7 @@ describe('TopicModel - Create', () => {
         content: null,
         editorData: null,
         trigger: null,
-        mode: null,
+        mode: 'default',
         status: null,
         completedAt: null,
         totalCost: null,
@@ -174,7 +174,7 @@ describe('TopicModel - Create', () => {
         historySummary: null,
         metadata: null,
         trigger: null,
-        mode: null,
+        mode: 'default',
         status: null,
         completedAt: null,
         totalCost: null,
@@ -239,6 +239,18 @@ describe('TopicModel - Create', () => {
 
       expect(createdTopic.agentId).toBe('agent-only');
       expect(createdTopic.sessionId).toBeNull();
+    });
+
+    it('should persist the mode field when explicitly set to "temp"', async () => {
+      const createdTopic = await topicModel.create(
+        { title: 'Incognito Topic', mode: 'temp', sessionId } satisfies CreateTopicParams,
+        'temp-topic',
+      );
+
+      expect(createdTopic.mode).toBe('temp');
+
+      const [dbTopic] = await serverDB.select().from(topics).where(eq(topics.id, 'temp-topic'));
+      expect(dbTopic.mode).toBe('temp');
     });
   });
 
@@ -382,6 +394,19 @@ describe('TopicModel - Create', () => {
       expect(dbTopics).toHaveLength(2);
       expect(dbTopics.find((t) => t.id === createdTopics[0].id)?.agentId).toBe('batch-agent-1');
       expect(dbTopics.find((t) => t.id === createdTopics[1].id)?.agentId).toBe('batch-agent-2');
+    });
+
+    it('should propagate explicit mode and default the rest to "default"', async () => {
+      const topicParams = [
+        { id: 'batch-temp', title: 'Temp', mode: 'temp', sessionId } as const,
+        { id: 'batch-default', title: 'Plain', sessionId } as const,
+      ];
+
+      const createdTopics = await topicModel.batchCreate(topicParams);
+
+      const byId = new Map(createdTopics.map((t) => [t.id, t]));
+      expect(byId.get('batch-temp')?.mode).toBe('temp');
+      expect(byId.get('batch-default')?.mode).toBe('default');
     });
   });
 

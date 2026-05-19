@@ -1342,6 +1342,43 @@ describe('topic action', () => {
 
       // TODO: need to test with fetchPresetTaskResult
     });
+
+    it('should short-circuit ephemeral (mode=temp) topics without calling the LLM', async () => {
+      const topicId = 'temp-topic';
+      const messages = [{ id: 'message-1', content: 'Hello' }] as UIChatMessage[];
+      const topics = [{ id: topicId, title: 'Default', mode: 'temp' }] as ChatTopic[];
+      const { result } = renderHook(() => useChatStore());
+
+      await act(async () => {
+        useChatStore.setState({
+          topicDataMap: {
+            [topicMapKey({ agentId: 'test' })]: {
+              items: topics,
+              total: topics.length,
+              currentPage: 0,
+              hasMore: false,
+              pageSize: 20,
+            },
+          },
+          activeAgentId: 'test',
+        });
+      });
+
+      const fetchSpy = vi.spyOn(chatService, 'fetchPresetTaskResult');
+      const updateTopicTitleInSummarySpy = vi.spyOn(
+        result.current,
+        'internal_updateTopicTitleInSummary',
+      );
+      const updateLoadingSpy = vi.spyOn(result.current, 'internal_updateTopicLoading');
+
+      await act(async () => {
+        await result.current.summaryTopicTitle(topicId, messages);
+      });
+
+      expect(fetchSpy).not.toHaveBeenCalled();
+      expect(updateTopicTitleInSummarySpy).not.toHaveBeenCalled();
+      expect(updateLoadingSpy).toHaveBeenCalledWith(topicId, false);
+    });
   });
   describe('createTopic', () => {
     it('should create a new topic and update the store', async () => {
@@ -1410,6 +1447,134 @@ describe('topic action', () => {
       expect(switchTopicSpy).toHaveBeenCalledWith(newTopicId);
     });
   });
+  describe('createEphemeralTopic', () => {
+    it('should call topicService.createTopic with mode=temp and switch to the new topic', async () => {
+      const { result } = renderHook(() => useChatStore());
+      const activeAgentId = 'agent-temp';
+      const newTopicId = 'tmp-topic-id';
+
+      await act(async () => {
+        useChatStore.setState({ activeAgentId, activeGroupId: undefined });
+      });
+
+      const createSpy = vi.spyOn(topicService, 'createTopic').mockResolvedValue(newTopicId);
+      const switchSpy = vi.spyOn(result.current, 'switchTopic');
+
+      let returned: string | undefined;
+      await act(async () => {
+        returned = await result.current.createEphemeralTopic();
+      });
+
+      expect(returned).toBe(newTopicId);
+      expect(createSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ mode: 'temp', sessionId: activeAgentId }),
+      );
+      expect(switchSpy).toHaveBeenCalledWith(newTopicId, {
+        clearNewKey: true,
+        skipRefreshMessage: true,
+      });
+    });
+
+    it('should no-op when neither activeAgentId nor activeGroupId is set', async () => {
+      const { result } = renderHook(() => useChatStore());
+      await act(async () => {
+        useChatStore.setState({ activeAgentId: undefined, activeGroupId: undefined });
+      });
+      const createSpy = vi.spyOn(topicService, 'createTopic');
+
+      let returned: string | undefined;
+      await act(async () => {
+        returned = await result.current.createEphemeralTopic();
+      });
+
+      expect(returned).toBeUndefined();
+      expect(createSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('saveEphemeralTopic', () => {
+    it('should flip mode → fetch messages → summary → refresh', async () => {
+      const { result } = renderHook(() => useChatStore());
+      const topicId = 'tmp-1';
+      const activeAgentId = 'agent-a';
+      const topics = [{ id: topicId, title: 'Default', mode: 'temp' }] as ChatTopic[];
+      const messages = [{ id: 'm1', content: 'hi' }] as UIChatMessage[];
+
+      await act(async () => {
+        useChatStore.setState({
+          activeAgentId,
+          topicDataMap: {
+            [topicMapKey({ agentId: activeAgentId })]: {
+              items: topics,
+              total: topics.length,
+              currentPage: 0,
+              hasMore: false,
+              pageSize: 20,
+            },
+          },
+        });
+      });
+
+      const updateSpy = vi.spyOn(result.current, 'internal_updateTopic').mockResolvedValue();
+      const summarySpy = vi.spyOn(result.current, 'summaryTopicTitle').mockResolvedValue();
+      const refreshSpy = vi.spyOn(result.current, 'refreshTopic').mockResolvedValue();
+      vi.spyOn(messageService, 'getMessages').mockResolvedValue(messages);
+
+      await act(async () => {
+        await result.current.saveEphemeralTopic(topicId);
+      });
+
+      expect(updateSpy).toHaveBeenCalledWith(topicId, { mode: 'default' });
+      expect(summarySpy).toHaveBeenCalledWith(topicId, messages);
+      expect(refreshSpy).toHaveBeenCalled();
+    });
+
+    it('should no-op for a non-ephemeral topic', async () => {
+      const { result } = renderHook(() => useChatStore());
+      const topicId = 'plain-1';
+      const topics = [{ id: topicId, title: 'Plain', mode: 'default' }] as ChatTopic[];
+
+      await act(async () => {
+        useChatStore.setState({
+          activeAgentId: 'a',
+          topicDataMap: {
+            [topicMapKey({ agentId: 'a' })]: {
+              items: topics,
+              total: topics.length,
+              currentPage: 0,
+              hasMore: false,
+              pageSize: 20,
+            },
+          },
+        });
+      });
+
+      const updateSpy = vi.spyOn(result.current, 'internal_updateTopic');
+      const summarySpy = vi.spyOn(result.current, 'summaryTopicTitle');
+
+      await act(async () => {
+        await result.current.saveEphemeralTopic(topicId);
+      });
+
+      expect(updateSpy).not.toHaveBeenCalled();
+      expect(summarySpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('discardEphemeralTopic', () => {
+    it('should delegate to removeTopic', async () => {
+      const { result } = renderHook(() => useChatStore());
+      const topicId = 'tmp-discard';
+      const removeSpy = vi.spyOn(result.current, 'removeTopic').mockResolvedValue();
+
+      await act(async () => {
+        await result.current.discardEphemeralTopic(topicId);
+      });
+
+      expect(removeSpy).toHaveBeenCalledWith(topicId);
+    });
+  });
+
   describe('autoRenameTopicTitle', () => {
     it('should auto-rename the topic title based on the messages', async () => {
       const { result } = renderHook(() => useChatStore());
