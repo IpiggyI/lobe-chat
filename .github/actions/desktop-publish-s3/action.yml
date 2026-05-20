@@ -29,10 +29,11 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Download merged artifacts
+    - name: Download artifacts
       uses: actions/download-artifact@v7
       with:
-        name: merged-release
+        pattern: release-*
+        merge-multiple: true
         path: release
 
     - name: List artifacts to upload

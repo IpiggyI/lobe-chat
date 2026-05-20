@@ -19,7 +19,7 @@ name: Release Desktop Canary
 on:
   push:
     branches:
-      - canary
+      - main
   workflow_dispatch:
     inputs:
       force:
@@ -153,7 +153,7 @@ jobs:
             echo "release_notes<<EOF"
             echo "## 🐤 Canary Build — ${TAG}"
             echo
-            echo "> Automated canary build from \`canary\` branch."
+            echo "> Automated canary build from \`main\` branch."
             echo
             echo "### Commit Information"
             echo
@@ -165,7 +165,7 @@ jobs:
             echo "### ⚠️ Important Notes"
             echo
             echo "- **This is an automated canary build and is NOT intended for production use.**"
-            echo "- Canary builds are triggered by \`build\`/\`fix\`/\`style\` commits on the \`canary\` branch."
+            echo "- Canary builds are triggered by \`build\`/\`fix\`/\`style\` commits on the \`main\` branch."
             echo "- May contain **unstable or incomplete changes**. **Use at your own risk.**"
             echo "- It is strongly recommended to **back up your data** before using a canary build."
             echo
@@ -175,10 +175,9 @@ jobs:
             echo
             echo "| Platform | File |"
             echo "|----------|------|"
-            echo "| macOS (Apple Silicon) | \`.dmg\` (arm64) |"
-            echo "| macOS (Intel) | \`.dmg\` (x64) |"
             echo "| Windows | \`.exe\` |"
-            echo "| Linux | \`.AppImage\` / \`.deb\` |"
+            echo
+            echo "> macOS / Linux builds are not produced by this auto workflow. Use \`Desktop Manual Build\` if you need them."
             echo "EOF"
           } >> $GITHUB_OUTPUT
 
@@ -216,7 +215,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-15, macos-15-intel, windows-2025, ubuntu-latest]
+        os: [windows-2025]
     steps:
       - uses: actions/checkout@v6
 
@@ -297,6 +296,7 @@ jobs:
   # ============================================
   merge-mac-files:
     needs: [build]
+    if: false  # disabled: only Windows builds, no macOS multi-arch files to merge
     name: Merge macOS Release Files
     runs-on: ubuntu-latest
     permissions:
@@ -342,16 +342,17 @@ jobs:
   # 创建 Canary Release
   # ============================================
   publish-release:
-    needs: [merge-mac-files, calculate-version]
+    needs: [build, calculate-version]
     name: Publish Canary Release
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - name: Download merged artifacts
+      - name: Download artifacts
         uses: actions/download-artifact@v7
         with:
-          name: merged-release
+          pattern: release-*
+          merge-multiple: true
           path: release
 
       - name: List final artifacts
@@ -375,13 +376,14 @@ jobs:
             release/*.rpm*
             release/*.tar.gz*
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # ============================================
   # 发布到 S3 更新服务器
   # ============================================
   publish-s3:
-    needs: [merge-mac-files, calculate-version]
+    needs: [build, calculate-version]
+    if: ${{ secrets.UPDATE_S3_BUCKET != '' }}
     name: Publish to S3
     runs-on: ubuntu-latest
     steps:
@@ -400,7 +402,7 @@ jobs:
   # 清理旧的 Canary Releases (保留最近 7 个)
   # ============================================
   cleanup-old-canaries:
-    needs: [publish-release, publish-s3]
+    needs: [publish-release]
     name: Cleanup Old Canary Releases
     runs-on: ubuntu-latest
     permissions:
@@ -449,6 +451,7 @@ jobs:
             console.log(`✅ Cleanup complete. Kept ${Math.min(canaryReleases.length, 7)} canary releases, deleted ${toDelete.length}.`);
 
       - name: Cleanup old S3 versions
+        if: ${{ secrets.UPDATE_S3_BUCKET != '' }}
         uses: ./.github/actions/desktop-cleanup-s3
         with:
           channel: canary
