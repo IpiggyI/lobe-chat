@@ -1,6 +1,7 @@
 import AgentMode from './AgentMode';
 import Clear from './Clear';
 import History from './History';
+import Incognito from './Incognito';
 import Memory from './Memory';
 import Mention from './Mention';
 import Model from './Model';
@@ -23,6 +24,7 @@ export const actionMap = {
   fileUpload: Upload,
   plus: Plus,
   history: History,
+  incognito: Incognito,
   memory: Memory,
   mention: Mention,
   model: Model,
