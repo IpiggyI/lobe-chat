@@ -49,6 +49,7 @@ jobs:
       version: ${{ steps.version.outputs.version }}
       tag: ${{ steps.version.outputs.tag }}
       should_build: ${{ steps.check.outputs.should_build }}
+      has_s3_config: ${{ steps.check-s3.outputs.has_s3_config }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -180,6 +181,19 @@ jobs:
             echo "> macOS / Linux builds are not produced by this auto workflow. Use \`Desktop Manual Build\` if you need them."
             echo "EOF"
           } >> $GITHUB_OUTPUT
+
+      - name: Detect S3 configuration
+        id: check-s3
+        env:
+          S3_BUCKET: ${{ secrets.UPDATE_S3_BUCKET }}
+        run: |
+          if [ -n "$S3_BUCKET" ]; then
+            echo "has_s3_config=true" >> $GITHUB_OUTPUT
+            echo "✅ S3 bucket configured, publish-s3 will run"
+          else
+            echo "has_s3_config=false" >> $GITHUB_OUTPUT
+            echo "⏭️ UPDATE_S3_BUCKET not set, publish-s3 will be skipped"
+          fi
 
   # ============================================
   # 代码质量检查
@@ -383,7 +397,7 @@ jobs:
   # ============================================
   publish-s3:
     needs: [build, calculate-version]
-    if: ${{ secrets.UPDATE_S3_BUCKET != '' }}
+    if: needs.calculate-version.outputs.has_s3_config == 'true'
     name: Publish to S3
     runs-on: ubuntu-latest
     steps:
@@ -402,7 +416,7 @@ jobs:
   # 清理旧的 Canary Releases (保留最近 7 个)
   # ============================================
   cleanup-old-canaries:
-    needs: [publish-release]
+    needs: [publish-release, calculate-version]
     name: Cleanup Old Canary Releases
     runs-on: ubuntu-latest
     permissions:
@@ -451,7 +465,7 @@ jobs:
             console.log(`✅ Cleanup complete. Kept ${Math.min(canaryReleases.length, 7)} canary releases, deleted ${toDelete.length}.`);
 
       - name: Cleanup old S3 versions
-        if: ${{ secrets.UPDATE_S3_BUCKET != '' }}
+        if: needs.calculate-version.outputs.has_s3_config == 'true'
         uses: ./.github/actions/desktop-cleanup-s3
         with:
           channel: canary
