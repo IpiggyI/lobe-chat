@@ -15,6 +15,7 @@ import { taskTemplateKeys } from '@/libs/swr/keys';
 import { taskTemplateService } from '@/services/taskTemplate';
 import { useBriefStore } from '@/store/brief';
 import { briefListSelectors } from '@/store/brief/selectors';
+import { serverConfigSelectors, useServerConfigStore } from '@/store/serverConfig';
 import { useToolStore } from '@/store/tool';
 import { useUserStore } from '@/store/user';
 import { authSelectors } from '@/store/user/slices/auth/selectors';
@@ -281,8 +282,12 @@ export function useDailyBriefRecommendationsUI(
   const useFetchLobehubConnectorConnections = useToolStore(
     (s) => s.useFetchLobehubSkillConnections,
   );
-  useFetchUserComposioConnections(requiredSources.has('composio'));
-  useFetchLobehubConnectorConnections(requiredSources.has('lobehub'));
+  // Gate background fetches behind server config flags so self-hosted forks
+  // without the integrations configured don't spam 500s.
+  const isComposioEnabled = useServerConfigStore(serverConfigSelectors.enableComposio);
+  const isLobehubSkillEnabled = useServerConfigStore(serverConfigSelectors.enableLobehubSkill);
+  useFetchUserComposioConnections(isComposioEnabled && requiredSources.has('composio'));
+  useFetchLobehubConnectorConnections(isLobehubSkillEnabled && requiredSources.has('lobehub'));
 
   const displayMode = resolveDailyBriefRecommendationDisplayMode({
     canFetchRecommendations,
