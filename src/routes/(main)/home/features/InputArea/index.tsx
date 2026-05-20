@@ -21,7 +21,7 @@ import SkillInstallBanner, { SKILL_INSTALL_BANNER_ID } from './SkillInstallBanne
 import StarterList from './StarterList';
 import { useSend } from './useSend';
 
-const leftActions: ActionKeys[] = ['agentMode', 'plus'];
+const leftActions: ActionKeys[] = ['agentMode', 'incognito', 'plus'];
 const rightActions: ActionKeys[] = ['modelLabel'];
 
 type BannerKind = 'skill' | 'botIntegration' | 'messenger';

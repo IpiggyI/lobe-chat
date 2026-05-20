@@ -3,7 +3,6 @@
 import { Flexbox } from '@lobehub/ui';
 import { BotPromptIcon } from '@lobehub/ui/icons';
 import {
-  GlassesIcon,
   MessageSquarePlusIcon,
   MessagesSquareIcon,
   RadioTowerIcon,
@@ -50,7 +49,6 @@ const Nav = memo(() => {
     hideProfile || (!!heterogeneousProviderType && heterogeneousProviderType !== 'claude-code');
   const switchTopic = useChatStore((s) => s.switchTopic);
   const [openNewTopicOrSaveTopic] = useChatStore((s) => [s.openNewTopicOrSaveTopic]);
-  const createEphemeralTopic = useChatStore((s) => s.createEphemeralTopic);
 
   const { mutate } = useActionSWR(topicActionKeys.openNewOrSave(), openNewTopicOrSaveTopic);
   const handleNewTopic = () => {
@@ -64,14 +62,6 @@ const Nav = memo(() => {
     mutate();
   };
 
-  const handleNewIncognitoTopic = async () => {
-    if (!agentId) return;
-    const newTopicId = await createEphemeralTopic(agentId);
-    if (newTopicId) {
-      router.push(urlJoin('/agent', agentId, newTopicId), { query: { mode: 'incognito' } });
-    }
-  };
-
   return (
     <Flexbox gap={1} paddingInline={4}>
       <NavItem
@@ -79,11 +69,6 @@ const Nav = memo(() => {
         icon={MessageSquarePlusIcon}
         title={tTopic('actions.addNewTopic')}
         onClick={handleNewTopic}
-      />
-      <NavItem
-        icon={GlassesIcon}
-        title={t('incognito.sidebar.button')}
-        onClick={handleNewIncognitoTopic}
       />
       <NavItem
         icon={SearchIcon}

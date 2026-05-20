@@ -245,9 +245,9 @@ export default {
   'incognito.dialog.discard.description':
     'All messages in this temporary chat will be permanently deleted. This action cannot be undone.',
   'incognito.dialog.discard.title': 'Discard temporary chat?',
-  'incognito.sidebar.button': 'Start Incognito Chat',
   'incognito.toast.discarded': 'Chat discarded',
   'incognito.toast.saved': 'Saved to your chat history',
+  'incognito.toggle.title': 'Start Incognito Chat',
   'input.addAi': 'Add an AI message',
   'input.addUser': 'Add a user message',
   'input.agentModeUnsupportedModel':

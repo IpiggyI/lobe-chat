@@ -146,12 +146,16 @@ export class ChatTopicActionImpl {
 
   createEphemeralTopic = async (sessionId?: string): Promise<string | undefined> => {
     const { activeAgentId, activeGroupId, internal_createTopic, switchTopic } = this.#get();
-    if (!activeAgentId && !activeGroupId) return;
+    // sessionId from the caller is the source of truth on routes (e.g. home
+    // page) that don't sync activeAgentId into ChatStore — only fall back to
+    // store state when the caller didn't pass anything.
+    const effectiveAgentId = sessionId || activeAgentId;
+    if (!effectiveAgentId && !activeGroupId) return;
 
     const topicId = await internal_createTopic({
       groupId: activeGroupId,
       mode: 'temp',
-      sessionId: activeGroupId ? null : sessionId || activeAgentId,
+      sessionId: activeGroupId ? null : effectiveAgentId,
       title: t('defaultTitle', { ns: 'topic' }),
     });
 
