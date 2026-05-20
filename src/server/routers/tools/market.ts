@@ -525,10 +525,21 @@ export const marketRouter = router({
     }),
 
   /**
-   * List all user connections
+   * List all user connections.
+   * Returns an empty array silently when the user has no market access token,
+   * since this endpoint is consumed by background SWR fetches (recommendations,
+   * skill store list) and "no token" simply means "no connections yet".
    */
   connectListConnections: lobehubSkillBaseProcedure.query(async ({ ctx }) => {
     log('connectListConnections');
+
+    // Skip the upstream call when there is no way to authenticate as a user.
+    // The trusted client fallback can also be absent (e.g. self-hosted forks
+    // without MARKET_TRUSTED_CLIENT_SECRET), so guarding here prevents the SDK
+    // from emitting "Missing bearer token" 500s on every page load.
+    if (!ctx.marketAccessToken && !ctx.marketUserInfo) {
+      return { connections: [] };
+    }
 
     try {
       const response = await ctx.marketSDK.connect.listConnections();
@@ -539,10 +550,22 @@ export const marketRouter = router({
         connections: response.connections || [],
       };
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       log('connectListConnections error: %O', error);
+
+      // Treat upstream auth failures as "no connections" instead of propagating
+      // a 500 — matches the silent-fail strategy used by klavis.getServerInstance.
+      const isAuthError =
+        errorMessage.includes('unauthorized') ||
+        errorMessage.includes('Missing bearer token') ||
+        errorMessage.includes('Status code: 401');
+      if (isAuthError) {
+        return { connections: [] };
+      }
+
       throw new TRPCError({
         code: 'INTERNAL_SERVER_ERROR',
-        message: `Failed to list connections: ${(error as Error).message}`,
+        message: `Failed to list connections: ${errorMessage}`,
       });
     }
   }),

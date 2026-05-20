@@ -2,12 +2,14 @@ import { type ToolManifest } from '@lobechat/types';
 import { z } from 'zod';
 
 import { PluginModel } from '@/database/models/plugin';
-import { getKlavisClient } from '@/libs/klavis';
+import { getKlavisClient, isKlavisClientAvailable } from '@/libs/klavis';
 import { authedProcedure, router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
 
 /**
- * Klavis procedure with API key validation and database access
+ * Klavis procedure with API key validation and database access.
+ * Throws when KLAVIS_API_KEY is missing, so reserve this for operations that
+ * actually require talking to the Klavis API.
  */
 const klavisProcedure = authedProcedure.use(serverDatabase).use(async (opts) => {
   const client = getKlavisClient();
@@ -15,6 +17,19 @@ const klavisProcedure = authedProcedure.use(serverDatabase).use(async (opts) => 
 
   return opts.next({
     ctx: { ...opts.ctx, klavisClient: client, pluginModel },
+  });
+});
+
+/**
+ * Database-only procedure for Klavis-related reads that do not need the Klavis SDK.
+ * Lets `getKlavisPlugins` stay callable even when KLAVIS_API_KEY is not configured,
+ * avoiding noisy 500s on the recommendations fetch path.
+ */
+const klavisDbProcedure = authedProcedure.use(serverDatabase).use(async (opts) => {
+  const pluginModel = new PluginModel(opts.ctx.serverDB, opts.ctx.userId);
+
+  return opts.next({
+    ctx: { ...opts.ctx, pluginModel },
   });
 });
 
@@ -114,9 +129,13 @@ export const klavisRouter = router({
     }),
 
   /**
-   * Get Klavis plugins from database
+   * Get Klavis plugins from database.
+   * Returns [] silently when KLAVIS_API_KEY is not configured, since the DB cannot
+   * hold klavis records without it. Avoids 500s on background SWR fetches.
    */
-  getKlavisPlugins: klavisProcedure.query(async ({ ctx }) => {
+  getKlavisPlugins: klavisDbProcedure.query(async ({ ctx }) => {
+    if (!isKlavisClientAvailable()) return [];
+
     const allPlugins = await ctx.pluginModel.query();
     // Filter plugins that have klavis customParams
     return allPlugins.filter((plugin) => plugin.customParams?.klavis);

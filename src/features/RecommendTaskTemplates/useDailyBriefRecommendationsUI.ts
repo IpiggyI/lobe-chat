@@ -10,6 +10,7 @@ import useSWR from 'swr';
 import { taskTemplateService } from '@/services/taskTemplate';
 import { useBriefStore } from '@/store/brief';
 import { briefListSelectors } from '@/store/brief/selectors';
+import { serverConfigSelectors, useServerConfigStore } from '@/store/serverConfig';
 import { useToolStore } from '@/store/tool';
 import { useUserStore } from '@/store/user';
 import { authSelectors } from '@/store/user/slices/auth/selectors';
@@ -115,8 +116,10 @@ export function useDailyBriefRecommendationsUI(
   }, [templates]);
   const useFetchUserKlavisServers = useToolStore((s) => s.useFetchUserKlavisServers);
   const useFetchLobehubSkillConnections = useToolStore((s) => s.useFetchLobehubSkillConnections);
-  useFetchUserKlavisServers(requiredSources.has('klavis'));
-  useFetchLobehubSkillConnections(requiredSources.has('lobehub'));
+  const isKlavisEnabled = useServerConfigStore(serverConfigSelectors.enableKlavis);
+  const isLobehubSkillEnabled = useServerConfigStore(serverConfigSelectors.enableLobehubSkill);
+  useFetchUserKlavisServers(isKlavisEnabled && requiredSources.has('klavis'));
+  useFetchLobehubSkillConnections(isLobehubSkillEnabled && requiredSources.has('lobehub'));
 
   if (!swrEnabled) return { mode: 'hidden' };
   if (!isInit || isLoading) return { mode: 'skeleton', skeletonCount: recommendationCount };
