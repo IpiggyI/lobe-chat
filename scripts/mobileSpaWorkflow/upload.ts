@@ -28,9 +28,18 @@ function collectFiles(dir: string): string[] {
   return results;
 }
 
-export async function uploadAssets(assetsDir: string, config: UploadConfig) {
-  const files = collectFiles(assetsDir);
-  console.log(`Found ${files.length} files to upload`);
+// HTML 走 Next.js 模板（template.ts 已抓为 TS 常量），Service Worker 必须从主站 origin 注册——这些不上 CDN。
+const SKIP_RELATIVE_PATTERNS: RegExp[] = [/\.html$/, /^sw\.js$/, /^workbox-[^/]+\.js$/];
+
+export async function uploadAssets(distDir: string, config: UploadConfig) {
+  const allFiles = collectFiles(distDir);
+  const files = allFiles.filter((filePath) => {
+    const relativePath = filePath.slice(distDir.length + 1);
+    return !SKIP_RELATIVE_PATTERNS.some((pattern) => pattern.test(relativePath));
+  });
+  console.log(
+    `Found ${files.length} files to upload (skipped ${allFiles.length - files.length} non-CDN files)`,
+  );
 
   const client = s3.createS3Client({
     accessKeyId: config.accessKeyId,
@@ -44,8 +53,8 @@ export async function uploadAssets(assetsDir: string, config: UploadConfig) {
   const results = await pMap(
     files,
     async (filePath) => {
-      const relativePath = filePath.slice(assetsDir.length + 1);
-      const key = `${config.keyPrefix}/assets/${relativePath}`;
+      const relativePath = filePath.slice(distDir.length + 1);
+      const key = `${config.keyPrefix}/${relativePath}`;
       const buffer = readFileSync(filePath);
       const fileName = basename(filePath);
       const ext = extname(filePath);

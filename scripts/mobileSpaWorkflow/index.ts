@@ -11,7 +11,6 @@ dotenv.config();
 
 const root = resolve(__dirname, '../..');
 const distDir = resolve(root, 'dist/mobile');
-const assetsDir = resolve(distDir, 'assets');
 
 function requireEnv(name: string): string {
   const value = process.env[name];
@@ -45,13 +44,13 @@ async function main() {
     stdio: 'inherit',
   });
 
-  if (!existsSync(assetsDir)) {
-    throw new Error(`Build output not found at ${assetsDir}`);
+  if (!existsSync(distDir)) {
+    throw new Error(`Build output not found at ${distDir}`);
   }
 
-  // Step 2: Upload assets to S3
-  console.log('\n=== Step 2: Uploading assets to S3 ===');
-  await uploadAssets(assetsDir, {
+  // Step 2: Upload all build outputs (assets/, vendor/, i18n/, etc.) to S3
+  console.log('\n=== Step 2: Uploading dist/mobile to S3 ===');
+  await uploadAssets(distDir, {
     accessKeyId: requireEnv('MOBILE_S3_ACCESS_KEY_ID'),
     bucket: requireEnv('MOBILE_S3_BUCKET'),
     endpoint: requireEnv('MOBILE_S3_ENDPOINT'),
