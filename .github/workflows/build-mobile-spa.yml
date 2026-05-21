@@ -39,8 +39,6 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v6
-        with:
-          token: ${{ secrets.GH_TOKEN }}
 
       - name: Setup environment
         uses: ./.github/actions/setup-env
