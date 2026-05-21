@@ -233,6 +233,25 @@ export const mobileRoutes: RouteObject[] = [
         path: 'settings',
       },
 
+      // Image routes
+      {
+        children: [
+          {
+            element: dynamicElement(
+              () => import('@/routes/(main)/(create)/image'),
+              'Mobile > Image',
+            ),
+            index: true,
+          },
+        ],
+        element: dynamicLayout(
+          () => import('@/routes/(main)/(create)/image/_layout'),
+          'Mobile > Image > Layout',
+        ),
+        errorElement: <ErrorBoundary />,
+        path: 'image',
+      },
+
       // Task workspace routes (cross-agent)
       {
         children: [
