@@ -165,7 +165,8 @@ const ToolDetectorSection = memo(() => {
         );
         return {
           children: <ToolStatusDisplay isDetecting={detecting} status={status} />,
-          desc: t(tool.descKey),
+          // TODO: settingSystemTools namespace 尚未注册到 src/locales/default/，待补 default locale 文件后移除 cast
+          desc: t(tool.descKey as any),
           label,
           minWidth: undefined,
         };

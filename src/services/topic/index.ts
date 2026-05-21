@@ -36,7 +36,9 @@ export class TopicService {
   };
 
   batchCreateTopics = (importTopics: ChatTopic[]): Promise<BatchTaskResult> => {
-    return lambdaClient.topic.batchCreateTopics.mutate(importTopics);
+    return lambdaClient.topic.batchCreateTopics.mutate(
+      importTopics.map((topic) => ({ ...topic, mode: topic.mode ?? undefined })),
+    );
   };
 
   cloneTopic = (id: string, newTitle?: string): Promise<string> => {
@@ -97,7 +99,10 @@ export class TopicService {
   };
 
   updateTopic = (id: string, data: Partial<ChatTopic>) => {
-    return lambdaClient.topic.updateTopic.mutate({ id, value: data });
+    return lambdaClient.topic.updateTopic.mutate({
+      id,
+      value: { ...data, mode: data.mode ?? undefined },
+    });
   };
 
   updateTopicMetadata = (id: string, metadata: UpdateTopicMetadataInput) => {

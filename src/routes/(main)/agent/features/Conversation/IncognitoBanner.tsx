@@ -18,11 +18,13 @@ const INCOGNITO_ACCENT_BORDER = 'rgba(139, 92, 246, 0.18)';
 const styles = createStaticStyles(({ css }) => ({
   banner: css`
     z-index: 10;
+
     width: 100%;
-    padding: 8px 16px;
+    padding-block: 8px;
+    padding-inline: 16px;
+    border-block-end: 1px solid ${INCOGNITO_ACCENT_BORDER};
 
     background: ${INCOGNITO_ACCENT_SOFT};
-    border-block-end: 1px solid ${INCOGNITO_ACCENT_BORDER};
   `,
   info: css`
     flex: 1;
@@ -78,15 +80,9 @@ export const IncognitoBanner = memo(() => {
   if (!activeTopicId || (!activeAgentId && !activeGroupId)) return null;
 
   return (
-    <Flexbox
-      align="center"
-      className={styles.banner}
-      gap={16}
-      horizontal
-      justify="space-between"
-    >
-      <Flexbox align="center" className={styles.info} gap={12} horizontal>
-        <Icon icon={GlassesIcon} size={{ fontSize: 20 }} style={{ color: INCOGNITO_ACCENT }} />
+    <Flexbox horizontal align="center" className={styles.banner} gap={16} justify="space-between">
+      <Flexbox horizontal align="center" className={styles.info} gap={12}>
+        <Icon icon={GlassesIcon} size={20} style={{ color: INCOGNITO_ACCENT }} />
         <Flexbox gap={2}>
           <Text className={styles.title} fontSize={13} weight={600}>
             {t('incognito.banner.title')}
@@ -96,17 +92,17 @@ export const IncognitoBanner = memo(() => {
           </Text>
         </Flexbox>
       </Flexbox>
-      <Flexbox gap={8} horizontal style={{ flexShrink: 0 }}>
+      <Flexbox horizontal gap={8} style={{ flexShrink: 0 }}>
         <Button
           icon={<SaveIcon size={14} />}
-          onClick={handleSave}
           size="small"
           style={{ background: INCOGNITO_ACCENT, borderColor: INCOGNITO_ACCENT }}
           type="primary"
+          onClick={handleSave}
         >
           {t('incognito.action.save')}
         </Button>
-        <Button danger icon={<Trash2Icon size={14} />} onClick={handleDiscard} size="small">
+        <Button danger icon={<Trash2Icon size={14} />} size="small" onClick={handleDiscard}>
           {t('incognito.action.discard')}
         </Button>
       </Flexbox>
