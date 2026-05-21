@@ -1,0 +1,71 @@
+name: Build Mobile SPA
+
+# Fork-only workflow. Manually rebuilds the mobile SPA bundle and uploads it
+# to a fork-owned CDN (Cloudflare R2 or any S3-compatible bucket). Reuses the
+# upstream-provided `scripts/mobileSpaWorkflow` pipeline:
+#   1. vite build (MOBILE=true, VITE_CDN_BASE=<cdn>/<key-prefix>/)
+#   2. upload dist/mobile/assets to the bucket under <key-prefix>/assets/
+#   3. regenerate src/app/spa/[variants]/[[...path]]/mobileHtmlTemplate.source.ts
+#      with the new chunk URLs
+# The regenerated template is then committed back to main, which triggers a
+# fresh Vercel deploy (Vercel build itself does NOT run mobile build, so the
+# 8GB build container stays safe). After the deploy finishes, mobile users
+# see the new bundle via the fallback branch in scripts/generateSpaTemplates.mts.
+#
+# Trigger this manually whenever fork-side changes need to reach the mobile UI
+# (mobile route tweaks, store/service/i18n updates that mobile router consumes).
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-mobile-spa
+  cancel-in-progress: true
+
+jobs:
+  build-mobile:
+    name: Build & upload mobile SPA
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Configure Git
+        run: |
+          git config --global user.name "lobehubbot"
+          git config --global user.email "i@lobehub.com"
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+
+      - name: Setup environment
+        uses: ./.github/actions/setup-env
+
+      - name: Install deps
+        run: pnpm install
+
+      - name: Build & upload mobile SPA
+        run: bunx tsx scripts/mobileSpaWorkflow/index.ts
+        env:
+          MOBILE_S3_BUCKET: ${{ secrets.MOBILE_S3_BUCKET }}
+          MOBILE_S3_ENDPOINT: ${{ secrets.MOBILE_S3_ENDPOINT }}
+          MOBILE_S3_ACCESS_KEY_ID: ${{ secrets.MOBILE_S3_ACCESS_KEY_ID }}
+          MOBILE_S3_SECRET_ACCESS_KEY: ${{ secrets.MOBILE_S3_SECRET_ACCESS_KEY }}
+          MOBILE_S3_PUBLIC_DOMAIN: ${{ secrets.MOBILE_S3_PUBLIC_DOMAIN }}
+          MOBILE_S3_REGION: ${{ secrets.MOBILE_S3_REGION }}
+          NODE_OPTIONS: --max-old-space-size=8192
+
+      - name: Commit updated template
+        run: |
+          TEMPLATE_PATH='src/app/spa/[variants]/[[...path]]/mobileHtmlTemplate.source.ts'
+          git add "$TEMPLATE_PATH"
+          if git diff --staged --quiet; then
+            echo '✓ mobileHtmlTemplate.source.ts unchanged, nothing to commit'
+            exit 0
+          fi
+          git commit -m "🤖 chore: rebuild mobile SPA bundle"
+          git push origin HEAD:main
