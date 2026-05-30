@@ -158,3 +158,5 @@ docs/superpowers/
 # Local tooling caches
 .ace-tool/
 .vercel
+
+.memory/
