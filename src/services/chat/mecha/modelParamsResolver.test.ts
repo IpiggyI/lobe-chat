@@ -388,6 +388,16 @@ describe('resolveModelExtendParams', () => {
 
         expect(result.reasoning_effort).toBe('medium');
       });
+
+      it('should default reasoning_effort to medium when unset', () => {
+        const result = resolveModelExtendParams({
+          chatConfig: {} as any,
+          model: 'gpt-5.5',
+          provider: 'openai',
+        });
+
+        expect(result.reasoning_effort).toBe('medium');
+      });
     });
 
     describe('gpt5_2ProReasoningEffort param', () => {
@@ -410,6 +420,18 @@ describe('resolveModelExtendParams', () => {
         });
 
         expect(result.reasoning_effort).toBe('high');
+      });
+
+      it('should not set reasoning_effort when gpt5_2ProReasoningEffort is unset', () => {
+        // Pro keeps its guard so the provider force-high path is not overridden by a
+        // resolver default — guards against the GPT-5.5 regular `|| 'medium'` leaking to Pro.
+        const result = resolveModelExtendParams({
+          chatConfig: {} as any,
+          model: 'gpt-5.5-pro',
+          provider: 'openai',
+        });
+
+        expect(result.reasoning_effort).toBeUndefined();
       });
     });
 
@@ -1315,6 +1337,22 @@ describe('parameter precedence and conflicts', () => {
       expect(result.thinking).toEqual({ type: 'adaptive' });
     });
 
+    it('should default adaptive-only models to adaptive when config is unset', () => {
+      // Opus 4.6/4.7 expose enableAdaptiveThinking without an enableReasoning fallback.
+      // An unset config must default to adaptive so out-of-the-box requests still think.
+      vi.spyOn(aiModelSelectors.aiModelSelectors, 'modelExtendParams').mockReturnValue(() => [
+        'enableAdaptiveThinking',
+      ]);
+
+      const result = resolveModelExtendParams({
+        chatConfig: {} as any,
+        model: 'claude-opus-4-7',
+        provider: 'anthropic',
+      });
+
+      expect(result.thinking).toEqual({ type: 'adaptive' });
+    });
+
     it('should disable adaptive thinking when off', () => {
       vi.spyOn(aiModelSelectors.aiModelSelectors, 'modelExtendParams').mockReturnValue(() => [
         'enableAdaptiveThinking',
@@ -1331,6 +1369,25 @@ describe('parameter precedence and conflicts', () => {
       expect(result.thinking).toEqual({ type: 'disabled' });
     });
 
+    it('should not force adaptive on models with an enableReasoning fallback when unset', () => {
+      // Models exposing both switches (e.g. Sonnet 4.6) keep the enableReasoning result and
+      // must NOT be forced into adaptive by the unset-config default — guards H2 regression.
+      vi.spyOn(aiModelSelectors.aiModelSelectors, 'modelExtendParams').mockReturnValue(() => [
+        'enableAdaptiveThinking',
+        'enableReasoning',
+        'reasoningBudgetToken',
+      ]);
+
+      const result = resolveModelExtendParams({
+        chatConfig: {} as any,
+        model: 'claude-sonnet-4-6',
+        provider: 'anthropic',
+      });
+
+      // enableReasoning unset → resolves disabled; adaptive must not override it.
+      expect(result.thinking).toEqual({ budget_tokens: 0, type: 'disabled' });
+    });
+
     it('should set adaptive thinking effort when configured', () => {
       vi.spyOn(aiModelSelectors.aiModelSelectors, 'modelExtendParams').mockReturnValue(() => [
         'effort',
@@ -1345,6 +1402,22 @@ describe('parameter precedence and conflicts', () => {
       });
 
       expect(result.effort).toBe('max');
+    });
+
+    it('should default opus47Effort to high when unset', () => {
+      // Opus 4.7 reads effort from opus47Effort (not effort); an unset slider must still
+      // emit a default so out-of-the-box requests carry output_config.effort.
+      vi.spyOn(aiModelSelectors.aiModelSelectors, 'modelExtendParams').mockReturnValue(() => [
+        'opus47Effort',
+      ]);
+
+      const result = resolveModelExtendParams({
+        chatConfig: {} as any,
+        model: 'claude-opus-4-7',
+        provider: 'anthropic',
+      });
+
+      expect(result.effort).toBe('high');
     });
   });
 

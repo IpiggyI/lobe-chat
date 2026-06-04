@@ -228,6 +228,32 @@ describe('LobeBedrockAI', () => {
         ]);
       });
 
+      it('should send adaptive thinking with display: summarized for Opus 4.7', async () => {
+        const mockStream = new ReadableStream({
+          start(controller) {
+            controller.enqueue('Hello, world!');
+            controller.close();
+          },
+        });
+        (instance['client'].send as Mock).mockResolvedValue(Promise.resolve(mockStream));
+
+        await instance.chat({
+          effort: 'high',
+          messages: [{ content: 'Hello', role: 'user' }],
+          model: 'global.anthropic.claude-opus-4-7',
+          thinking: { type: 'adaptive' },
+        });
+
+        const commandInput = (InvokeModelWithResponseStreamCommand as unknown as Mock).mock
+          .calls[0][0];
+        const body = JSON.parse(commandInput.body);
+
+        // display: 'summarized' must reach the serialized HTTP body — Opus 4.7 defaults to
+        // omitted, so without it the thinking block returns empty (signature only).
+        expect(body.thinking).toEqual({ display: 'summarized', type: 'adaptive' });
+        expect(body.output_config).toEqual({ effort: 'high' });
+      });
+
       it('should convert Claude assistant reasoning signatures to thinking content', async () => {
         const mockStream = new ReadableStream({
           start(controller) {

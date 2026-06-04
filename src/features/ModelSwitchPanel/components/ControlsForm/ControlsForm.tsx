@@ -83,11 +83,20 @@ const ControlsForm = memo<ControlsFormProps>(
     const initialValues = useMemo(() => {
       const enableReasoningInitialValue = resolveEnableReasoningInitialValue(config);
 
+      // Mirror modelParamsResolver: adaptive-only models (Opus 4.6/4.7, no enableReasoning
+      // fallback) default the switch ON so the UI matches the adaptive request actually sent.
+      const isAdaptiveOnly =
+        !!modelExtendParams?.includes('enableAdaptiveThinking') &&
+        !modelExtendParams?.includes('enableReasoning');
+      const enableAdaptiveThinkingInitialValue =
+        config.enableAdaptiveThinking ?? (isAdaptiveOnly ? true : undefined);
+
       return {
         ...config,
+        enableAdaptiveThinking: enableAdaptiveThinkingInitialValue,
         enableReasoning: enableReasoningInitialValue,
       };
-    }, [config]);
+    }, [config, modelExtendParams]);
 
     useEffect(() => {
       form.setFieldsValue(initialValues);
