@@ -202,13 +202,15 @@ export const buildDefaultAnthropicPayload = async (
   }
 
   if (!!thinking && (thinking.type === 'enabled' || thinking.type === 'adaptive')) {
-    const resolvedThinking: Anthropic.MessageCreateParams['thinking'] =
+    // SDK's ThinkingConfigAdaptive type omits `display` (lags the 4.7 API), so drop the explicit
+    // annotation like the bedrock path; the outer `as MessageCreateParams` carries it through.
+    const resolvedThinking =
       thinking.type === 'enabled'
         ? {
             budget_tokens: Math.min(thinking?.budget_tokens || 1024, resolvedMaxTokens - 1),
-            type: 'enabled',
+            type: 'enabled' as const,
           }
-        : { type: 'adaptive' };
+        : { display: 'summarized' as const, type: 'adaptive' as const };
 
     return {
       max_tokens: resolvedMaxTokens,

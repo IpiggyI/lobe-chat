@@ -157,14 +157,20 @@ export const applyModelExtendParams = (ctx: ApplyModelExtendParamsContext): Mode
     };
   }
 
-  // Adaptive thinking (Claude Opus/Sonnet 4.6)
+  // Adaptive thinking (Claude Opus/Sonnet 4.6/4.7)
   if (modelExtendParams.includes('enableAdaptiveThinking')) {
-    if (chatConfig.enableAdaptiveThinking) {
+    // Adaptive-only models (Opus 4.6/4.7, no enableReasoning fallback) default to ON so
+    // out-of-the-box requests still think. `?? adaptiveOnly` keeps an explicit `false`
+    // (user opted out) distinct from an unset config (default ON).
+    const adaptiveOnly = !modelExtendParams.includes('enableReasoning');
+    const adaptiveEnabled = chatConfig.enableAdaptiveThinking ?? adaptiveOnly;
+
+    if (adaptiveEnabled) {
       extendParams.thinking = {
         type: 'adaptive',
       };
-    } else if (!modelExtendParams.includes('enableReasoning')) {
-      // Only disable when the model has no enableReasoning fallback
+    } else if (adaptiveOnly) {
+      // Explicitly opted out on an adaptive-only model → disable
       extendParams.thinking = {
         type: 'disabled',
       };
@@ -198,8 +204,8 @@ export const applyModelExtendParams = (ctx: ApplyModelExtendParamsContext): Mode
     extendParams.reasoning_effort = chatConfig.gpt5_1ReasoningEffort;
   }
 
-  if (modelExtendParams.includes('gpt5_2ReasoningEffort') && chatConfig.gpt5_2ReasoningEffort) {
-    extendParams.reasoning_effort = chatConfig.gpt5_2ReasoningEffort;
+  if (modelExtendParams.includes('gpt5_2ReasoningEffort')) {
+    extendParams.reasoning_effort = chatConfig.gpt5_2ReasoningEffort || 'medium';
   }
 
   if (
@@ -260,8 +266,8 @@ export const applyModelExtendParams = (ctx: ApplyModelExtendParamsContext): Mode
     extendParams.effort = chatConfig.effort || 'high';
   }
 
-  if (modelExtendParams.includes('opus47Effort') && chatConfig.opus47Effort) {
-    extendParams.effort = chatConfig.opus47Effort;
+  if (modelExtendParams.includes('opus47Effort')) {
+    extendParams.effort = chatConfig.opus47Effort || 'high';
   }
 
   if (modelExtendParams.includes('step3_5ReasoningEffort') && chatConfig.step3_5ReasoningEffort) {

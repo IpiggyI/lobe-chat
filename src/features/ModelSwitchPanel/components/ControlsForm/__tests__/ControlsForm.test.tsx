@@ -118,4 +118,44 @@ describe('ControlsForm', () => {
     });
     expect(testState.updateAgentChatConfig).not.toHaveBeenCalled();
   });
+
+  it('should default enableAdaptiveThinking ON for adaptive-only models without persisting it', () => {
+    // Opus 4.6/4.7: enableAdaptiveThinking present, enableReasoning absent.
+    testState.aiState.extendParams = ['enableAdaptiveThinking', 'opus47Effort'];
+    testState.agentState.config = {};
+
+    render(<ControlsForm model="claude-opus-4-7" provider="anthropic" />);
+
+    expect(testState.setFieldsValue).toHaveBeenLastCalledWith(
+      expect.objectContaining({ enableAdaptiveThinking: true }),
+    );
+    // Default must stay in the form layer only — never written back to the store.
+    expect(testState.updateAgentChatConfig).not.toHaveBeenCalled();
+  });
+
+  it('should not force adaptive ON when the model also exposes enableReasoning', () => {
+    // Sonnet 4.6: both switches present → adaptive must not be defaulted true.
+    testState.aiState.extendParams = ['enableAdaptiveThinking', 'enableReasoning'];
+    testState.agentState.config = {};
+
+    render(<ControlsForm model="claude-sonnet-4-6" provider="anthropic" />);
+
+    expect(testState.setFieldsValue).toHaveBeenLastCalledWith(
+      expect.objectContaining({ enableAdaptiveThinking: undefined }),
+    );
+    expect(testState.updateAgentChatConfig).not.toHaveBeenCalled();
+  });
+
+  it('should preserve an explicit enableAdaptiveThinking=false on adaptive-only models', () => {
+    // User opted out: `?? adaptiveOnly` must keep the explicit false, no silent flip.
+    testState.aiState.extendParams = ['enableAdaptiveThinking', 'opus47Effort'];
+    testState.agentState.config = { enableAdaptiveThinking: false };
+
+    render(<ControlsForm model="claude-opus-4-7" provider="anthropic" />);
+
+    expect(testState.setFieldsValue).toHaveBeenLastCalledWith(
+      expect.objectContaining({ enableAdaptiveThinking: false }),
+    );
+    expect(testState.updateAgentChatConfig).not.toHaveBeenCalled();
+  });
 });
