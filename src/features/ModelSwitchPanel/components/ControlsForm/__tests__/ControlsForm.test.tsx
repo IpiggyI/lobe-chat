@@ -1,5 +1,6 @@
 import { render } from '@testing-library/react';
 import type { ReactNode } from 'react';
+import { isValidElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import ControlsForm from '../ControlsForm';
@@ -23,12 +24,18 @@ const testState = vi.hoisted(() => ({
   aiState: {
     extendParams: ['enableReasoning'],
   } as TestAiState,
+  // Captures the items prop the real Form would receive, so tests can assert on the
+  // per-field config (the mocked Form does not render item children).
+  lastFormProps: undefined as Record<string, any> | undefined,
   setFieldsValue: vi.fn(),
   updateAgentChatConfig: vi.fn(),
 }));
 
 vi.mock('@lobehub/ui', () => {
-  const MockForm = () => <div data-testid="controls-form" />;
+  const MockForm = (props: Record<string, any>) => {
+    testState.lastFormProps = props;
+    return <div data-testid="controls-form" />;
+  };
   MockForm.useForm = () => [{ setFieldsValue: testState.setFieldsValue }];
 
   return { Form: MockForm };
@@ -89,6 +96,7 @@ describe('ControlsForm', () => {
     testState.aiState = {
       extendParams: ['enableReasoning'],
     };
+    testState.lastFormProps = undefined;
   });
 
   it('should sync legacy thinking values into mounted form without persisting them', () => {
@@ -157,5 +165,28 @@ describe('ControlsForm', () => {
       expect.objectContaining({ enableAdaptiveThinking: false }),
     );
     expect(testState.updateAgentChatConfig).not.toHaveBeenCalled();
+  });
+
+  it('should lock the gpt5.5-pro reasoning effort slider to high + disabled', () => {
+    // Pro family is fixed high. The UI must show high and block edits even if a legacy
+    // store value (medium/xhigh) is present — getValueProps pins it, disabled blocks writes.
+    testState.aiState.extendParams = ['gpt5_2ProReasoningEffort'];
+    testState.agentState = {
+      config: { gpt5_2ProReasoningEffort: 'medium' },
+      model: 'gpt-5.5-pro',
+      provider: 'openai',
+    };
+
+    render(<ControlsForm model="gpt-5.5-pro" provider="openai" />);
+
+    const items = (testState.lastFormProps?.items ?? []) as Record<string, any>[];
+    const proItem = items.find((item) => item.name === 'gpt5_2ProReasoningEffort');
+
+    expect(proItem).toBeDefined();
+    // Displayed value is pinned to high, ignoring the legacy stored 'medium'.
+    expect(proItem!.getValueProps()).toEqual({ value: 'high' });
+    // Slider element is rendered disabled.
+    expect(isValidElement(proItem!.children)).toBe(true);
+    expect((proItem!.children as any).props.disabled).toBe(true);
   });
 });

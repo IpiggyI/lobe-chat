@@ -91,6 +91,10 @@ export interface LevelSliderProps<T extends string = string> {
   defaultValue?: T;
   disabled?: boolean;
   /**
+   * Lock the slider: antd slider + every level label become non-interactive.
+   */
+  disabled?: boolean;
+  /**
    * Ordered array of level values (left to right on slider)
    */
   levels: readonly T[];
@@ -148,6 +152,7 @@ function LevelSlider<T extends string = string>({
   levels,
   value,
   defaultValue,
+  disabled,
   onChange,
   marks: customMarks,
   style,

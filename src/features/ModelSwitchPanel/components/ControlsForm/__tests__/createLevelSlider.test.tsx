@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { createLevelSliderComponent } from '../createLevelSlider';
@@ -83,6 +83,43 @@ describe('createLevelSliderComponent', () => {
       expect(() => {
         render(<TestSlider onChange={mockOnChange} />);
       }).not.toThrow();
+    });
+  });
+
+  describe('disabled (locked) mode', () => {
+    it('should disable every level label and not call store hooks', () => {
+      const TestSlider = createLevelSliderComponent<TestLevel>({
+        configKey: 'gpt5_2ProReasoningEffort',
+        defaultValue: 'medium',
+        levels: TEST_LEVELS,
+      });
+
+      // `disabled` alone (no value/onChange) must still skip store access — this is the
+      // exact behavior the `|| disabled` branch in createLevelSlider guards. Passing a
+      // value/onChange here would make isControlled true anyway and hide a regression if
+      // that branch were removed, so this case deliberately passes neither.
+      expect(() => {
+        render(<TestSlider disabled />);
+      }).not.toThrow();
+
+      ['low', 'medium', 'high'].forEach((level) => {
+        expect(screen.getByText(level)).toBeDisabled();
+      });
+    });
+
+    it('should not fire onChange when a label is clicked while disabled', () => {
+      const TestSlider = createLevelSliderComponent<TestLevel>({
+        configKey: 'gpt5_2ProReasoningEffort',
+        defaultValue: 'medium',
+        levels: TEST_LEVELS,
+      });
+
+      const onChange = vi.fn();
+      render(<TestSlider disabled value="high" onChange={onChange} />);
+
+      fireEvent.click(screen.getByText('low'));
+
+      expect(onChange).not.toHaveBeenCalled();
     });
   });
 

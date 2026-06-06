@@ -311,14 +311,16 @@ describe('resolveModelExtendParams', () => {
         expect(result.reasoning_effort).toBe('medium');
       });
 
-      it('should not set reasoning_effort when not configured', () => {
+      it('should default reasoning_effort to medium when not configured', () => {
+        // See-what-you-send: ReasoningEffortSlider shows 'medium' by default, so an
+        // untouched config must emit medium rather than omitting the field.
         const result = resolveModelExtendParams({
           chatConfig: {} as any,
           model: 'gpt-4',
           provider: 'openai',
         });
 
-        expect(result.reasoning_effort).toBeUndefined();
+        expect(result.reasoning_effort).toBe('medium');
       });
     });
 
@@ -387,6 +389,16 @@ describe('resolveModelExtendParams', () => {
 
         expect(result.reasoning_effort).toBe('high');
       });
+
+      it('should default reasoning_effort to medium when unset', () => {
+        const result = resolveModelExtendParams({
+          chatConfig: {} as any,
+          model: 'gpt-5',
+          provider: 'openai',
+        });
+
+        expect(result.reasoning_effort).toBe('medium');
+      });
     });
 
     describe('gpt5_1ReasoningEffort param', () => {
@@ -434,7 +446,7 @@ describe('resolveModelExtendParams', () => {
         expect(result.reasoning_effort).toBe('medium');
       });
 
-      it('should default reasoning_effort to medium when unset', () => {
+      it('should default reasoning_effort to medium for the native gpt-5.5 (UI shows medium)', () => {
         const result = resolveModelExtendParams({
           chatConfig: {} as any,
           model: 'gpt-5.5',
@@ -442,6 +454,18 @@ describe('resolveModelExtendParams', () => {
         });
 
         expect(result.reasoning_effort).toBe('medium');
+      });
+
+      it('should default reasoning_effort to none for gpt-5.2 (UI shows none, see-what-you-send)', () => {
+        // ControlsForm only shows medium for the exact `gpt-5.5`; gpt-5.2 and openrouter
+        // gpt-5.x show none, so an untouched config must send none rather than medium.
+        const result = resolveModelExtendParams({
+          chatConfig: {} as any,
+          model: 'gpt-5.2',
+          provider: 'openai',
+        });
+
+        expect(result.reasoning_effort).toBe('none');
       });
     });
 
@@ -467,16 +491,159 @@ describe('resolveModelExtendParams', () => {
         expect(result.reasoning_effort).toBe('high');
       });
 
-      it('should not set reasoning_effort when gpt5_2ProReasoningEffort is unset', () => {
-        // Pro keeps its guard so the provider force-high path is not overridden by a
-        // resolver default — guards against the GPT-5.5 regular `|| 'medium'` leaking to Pro.
+      it('should force reasoning_effort to high even when unset', () => {
+        // Pro family target behavior is a fixed high effort. The resolver emits a literal
+        // 'high' so every downstream path receives high, not only the OpenAI provider
+        // force-high branch. The UI mirrors this by locking the slider to high + disabled.
         const result = resolveModelExtendParams({
           chatConfig: {} as any,
           model: 'gpt-5.5-pro',
           provider: 'openai',
         });
 
-        expect(result.reasoning_effort).toBeUndefined();
+        expect(result.reasoning_effort).toBe('high');
+      });
+
+      it('should override legacy medium/xhigh store values with high', () => {
+        const medium = resolveModelExtendParams({
+          chatConfig: { gpt5_2ProReasoningEffort: 'medium' } as any,
+          model: 'gpt-5.5-pro',
+          provider: 'openai',
+        });
+        const xhigh = resolveModelExtendParams({
+          chatConfig: { gpt5_2ProReasoningEffort: 'xhigh' } as any,
+          model: 'gpt-5.5-pro',
+          provider: 'openai',
+        });
+
+        expect(medium.reasoning_effort).toBe('high');
+        expect(xhigh.reasoning_effort).toBe('high');
+      });
+    });
+
+    describe('grok4_20ReasoningEffort param', () => {
+      beforeEach(() => {
+        vi.spyOn(aiModelSelectors.aiModelSelectors, 'isModelHasExtendParams').mockReturnValue(
+          () => true,
+        );
+        vi.spyOn(aiModelSelectors.aiModelSelectors, 'modelExtendParams').mockReturnValue(() => [
+          'grok4_20ReasoningEffort',
+        ]);
+      });
+
+      it('should set reasoning_effort for grok4.20 variant', () => {
+        const result = resolveModelExtendParams({
+          chatConfig: { grok4_20ReasoningEffort: 'high' } as any,
+          model: 'grok-4-20',
+          provider: 'xai',
+        });
+
+        expect(result.reasoning_effort).toBe('high');
+      });
+
+      it('should default reasoning_effort to medium when unset', () => {
+        const result = resolveModelExtendParams({
+          chatConfig: {} as any,
+          model: 'grok-4-20',
+          provider: 'xai',
+        });
+
+        expect(result.reasoning_effort).toBe('medium');
+      });
+    });
+
+    describe('grok4_3ReasoningEffort param', () => {
+      beforeEach(() => {
+        vi.spyOn(aiModelSelectors.aiModelSelectors, 'isModelHasExtendParams').mockReturnValue(
+          () => true,
+        );
+        vi.spyOn(aiModelSelectors.aiModelSelectors, 'modelExtendParams').mockReturnValue(() => [
+          'grok4_3ReasoningEffort',
+        ]);
+      });
+
+      it('should set reasoning_effort for grok4.3 variant', () => {
+        const result = resolveModelExtendParams({
+          chatConfig: { grok4_3ReasoningEffort: 'high' } as any,
+          model: 'grok-4-3',
+          provider: 'xai',
+        });
+
+        expect(result.reasoning_effort).toBe('high');
+      });
+
+      it('should default reasoning_effort to low when unset', () => {
+        // Grok 4.3 slider defaults to 'low' (not medium); see-what-you-send.
+        const result = resolveModelExtendParams({
+          chatConfig: {} as any,
+          model: 'grok-4-3',
+          provider: 'xai',
+        });
+
+        expect(result.reasoning_effort).toBe('low');
+      });
+    });
+
+    describe('hy3ReasoningEffort param', () => {
+      beforeEach(() => {
+        vi.spyOn(aiModelSelectors.aiModelSelectors, 'isModelHasExtendParams').mockReturnValue(
+          () => true,
+        );
+        vi.spyOn(aiModelSelectors.aiModelSelectors, 'modelExtendParams').mockReturnValue(() => [
+          'hy3ReasoningEffort',
+        ]);
+      });
+
+      it('should set reasoning_effort for hunyuan 3 variant', () => {
+        const result = resolveModelExtendParams({
+          chatConfig: { hy3ReasoningEffort: 'low' } as any,
+          model: 'hunyuan-t1',
+          provider: 'volcengine',
+        });
+
+        expect(result.reasoning_effort).toBe('low');
+      });
+
+      it('should default reasoning_effort to high when unset', () => {
+        // Hunyuan 3 slider defaults to 'high'; see-what-you-send.
+        const result = resolveModelExtendParams({
+          chatConfig: {} as any,
+          model: 'hunyuan-t1',
+          provider: 'volcengine',
+        });
+
+        expect(result.reasoning_effort).toBe('high');
+      });
+    });
+
+    describe('codexMaxReasoningEffort param', () => {
+      beforeEach(() => {
+        vi.spyOn(aiModelSelectors.aiModelSelectors, 'isModelHasExtendParams').mockReturnValue(
+          () => true,
+        );
+        vi.spyOn(aiModelSelectors.aiModelSelectors, 'modelExtendParams').mockReturnValue(() => [
+          'codexMaxReasoningEffort',
+        ]);
+      });
+
+      it('should set reasoning_effort for codex max variant', () => {
+        const result = resolveModelExtendParams({
+          chatConfig: { codexMaxReasoningEffort: 'high' } as any,
+          model: 'gpt-5-codex-max',
+          provider: 'openai',
+        });
+
+        expect(result.reasoning_effort).toBe('high');
+      });
+
+      it('should default reasoning_effort to medium when unset', () => {
+        const result = resolveModelExtendParams({
+          chatConfig: {} as any,
+          model: 'gpt-5-codex-max',
+          provider: 'openai',
+        });
+
+        expect(result.reasoning_effort).toBe('medium');
       });
     });
 
@@ -1259,12 +1426,10 @@ describe('parameter precedence and conflicts', () => {
         'reasoningEffort',
         'gpt5ReasoningEffort',
         'gpt5_2ReasoningEffort',
-        'gpt5_2ProReasoningEffort',
       ]);
 
       const result = resolveModelExtendParams({
         chatConfig: {
-          gpt5_2ProReasoningEffort: undefined,
           gpt5_2ReasoningEffort: 'medium',
           gpt5ReasoningEffort: undefined,
           reasoningEffort: 'low',
@@ -1273,7 +1438,8 @@ describe('parameter precedence and conflicts', () => {
         provider: 'openai',
       });
 
-      // gpt5_2ReasoningEffort should be set, others are undefined
+      // Later variants win: gpt5_2ReasoningEffort is processed last and resolves to medium.
+      // (reasoningEffort/gpt5ReasoningEffort now default to medium when unset, but are overridden.)
       expect(result.reasoning_effort).toBe('medium');
     });
 
@@ -1392,6 +1558,24 @@ describe('parameter precedence and conflicts', () => {
       const result = resolveModelExtendParams({
         chatConfig: {} as any,
         model: 'claude-opus-4-7',
+        provider: 'anthropic',
+      });
+
+      expect(result.thinking).toEqual({ type: 'adaptive' });
+    });
+
+    it('should keep adaptive default for adaptive-only models that also expose an effort slider', () => {
+      // Guards a future upstream opus-4-8-style model that carries both enableAdaptiveThinking
+      // and an effort slider: an unset config must still default to adaptive thinking so
+      // out-of-the-box requests think, regardless of any co-present effort keys.
+      vi.spyOn(aiModelSelectors.aiModelSelectors, 'modelExtendParams').mockReturnValue(() => [
+        'enableAdaptiveThinking',
+        'opus47Effort',
+      ]);
+
+      const result = resolveModelExtendParams({
+        chatConfig: {} as any,
+        model: 'claude-opus-4-8',
         provider: 'anthropic',
       });
 
@@ -1520,12 +1704,13 @@ describe('parameter precedence and conflicts', () => {
         provider: 'provider',
       });
 
-      // Only enableReasoning should set thinking to disabled, others should be undefined
+      // enableReasoning sets thinking to disabled; reasoningEffort now defaults to medium
+      // (see-what-you-send), while the remaining unset params stay undefined.
       expect(result.thinking).toEqual({
         budget_tokens: 0,
         type: 'disabled',
       });
-      expect(result.reasoning_effort).toBeUndefined();
+      expect(result.reasoning_effort).toBe('medium');
       expect(result.verbosity).toBeUndefined();
       expect(result.thinkingBudget).toBeUndefined();
       expect(result.thinkingLevel).toBe('high');

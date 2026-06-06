@@ -205,7 +205,12 @@ export const applyModelExtendParams = (ctx: ApplyModelExtendParamsContext): Mode
   }
 
   if (modelExtendParams.includes('gpt5_2ReasoningEffort')) {
-    extendParams.reasoning_effort = chatConfig.gpt5_2ReasoningEffort || 'medium';
+    // See-what-you-send: mirror the model-aware UI default in ControlsForm — only the
+    // native `gpt-5.5` slider shows medium; gpt-5.2 and openrouter gpt-5.x show none.
+    // Defaulting unset configs to medium for the latter would send medium while the UI
+    // shows none.
+    extendParams.reasoning_effort =
+      chatConfig.gpt5_2ReasoningEffort || (model === 'gpt-5.5' ? 'medium' : 'none');
   }
 
   if (
@@ -235,8 +240,10 @@ export const applyModelExtendParams = (ctx: ApplyModelExtendParamsContext): Mode
     extendParams.reasoning_effort = chatConfig.ring2_6ReasoningEffort;
   }
 
-  if (modelExtendParams.includes('codexMaxReasoningEffort') && chatConfig.codexMaxReasoningEffort) {
-    extendParams.reasoning_effort = chatConfig.codexMaxReasoningEffort;
+  if (modelExtendParams.includes('codexMaxReasoningEffort')) {
+    // See-what-you-send: the ControlsForm slider defaults to medium, so an unset
+    // config must send medium too.
+    extendParams.reasoning_effort = chatConfig.codexMaxReasoningEffort || 'medium';
   }
 
   // DeepSeek reasoning effort is reconciled last to avoid invalid combinations.

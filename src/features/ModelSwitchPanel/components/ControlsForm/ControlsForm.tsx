@@ -297,8 +297,12 @@ const ControlsForm = memo<ControlsFormProps>(
         },
       },
       {
-        children: <GPT52ProReasoningEffortSlider />,
+        // Pro family is fixed at high effort (resolver forces it). Lock the UI to high so
+        // see-what-you-send holds: getValueProps pins the displayed value to 'high'
+        // regardless of any legacy stored value, and disabled blocks edits/write-back.
+        children: <GPT52ProReasoningEffortSlider disabled />,
         desc: 'reasoning_effort',
+        getValueProps: () => ({ value: 'high' }),
         label: t('extendParams.reasoningEffort.title'),
         layout: 'vertical',
         minWidth: undefined,
