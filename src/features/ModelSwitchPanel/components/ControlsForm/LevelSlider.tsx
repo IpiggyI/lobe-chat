@@ -90,6 +90,10 @@ export interface LevelSliderProps<T extends string = string> {
    */
   defaultValue?: T;
   /**
+   * Lock the slider: antd slider + every level label become non-interactive.
+   */
+  disabled?: boolean;
+  /**
    * Ordered array of level values (left to right on slider)
    */
   levels: readonly T[];
@@ -147,6 +151,7 @@ function LevelSlider<T extends string = string>({
   levels,
   value,
   defaultValue,
+  disabled,
   onChange,
   marks: customMarks,
   style,
@@ -192,6 +197,7 @@ function LevelSlider<T extends string = string>({
       <div className={styles.slider}>
         <Slider
           dots
+          disabled={disabled}
           max={levels.length - 1}
           min={0}
           step={1}
@@ -211,10 +217,12 @@ function LevelSlider<T extends string = string>({
             <button
               aria-current={selected ? 'true' : undefined}
               className={cx(styles.label, selected && styles.selectedLabel)}
+              disabled={disabled}
               key={option.value}
               style={option.style}
               type="button"
               onClick={() => {
+                if (disabled) return;
                 setCurrentLevel(option.value);
               }}
             >

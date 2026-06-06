@@ -356,7 +356,7 @@ const ExtendParamsSelect = memo<ExtendParamsSelectProps>(({ value, onChange }) =
       enableReasoning: <Switch checked disabled />,
       gpt5ReasoningEffort: <GPT5ReasoningEffortSlider value="medium" />,
       gpt5_1ReasoningEffort: <GPT51ReasoningEffortSlider value="none" />,
-      gpt5_2ProReasoningEffort: <GPT52ProReasoningEffortSlider value="medium" />,
+      gpt5_2ProReasoningEffort: <GPT52ProReasoningEffortSlider value="high" />,
       gpt5_2ReasoningEffort: <GPT52ReasoningEffortSlider value="none" />,
       grok4_20ReasoningEffort: <Grok420ReasoningEffortSlider value="medium" />,
       grok4_3ReasoningEffort: <Grok43ReasoningEffortSlider value="low" />,

@@ -37,6 +37,10 @@ export interface LevelSliderConfig<T extends string> {
 
 export interface CreatedLevelSliderProps<T extends string> {
   defaultValue?: T;
+  /**
+   * Lock the slider (read-only display). Threaded down to the inner LevelSlider.
+   */
+  disabled?: boolean;
   onChange?: (value: T) => void;
   value?: T;
 }
@@ -52,11 +56,13 @@ export function createLevelSliderComponent<T extends string>(config: LevelSlider
   // Inner pure UI component - no store hooks, safe for preview
   const LevelSliderInner = memo<{
     defaultValue: T;
+    disabled?: boolean;
     onChange: (_v: T) => void;
     value: T;
-  }>(({ value, onChange, defaultValue: dv }) => (
+  }>(({ value, onChange, defaultValue: dv, disabled }) => (
     <LevelSlider<T>
       defaultValue={dv}
+      disabled={disabled}
       levels={levels}
       marks={marks}
       style={style}
@@ -87,15 +93,22 @@ export function createLevelSliderComponent<T extends string>(config: LevelSlider
 
   // Main exported component - chooses between controlled and store mode
   const CreatedLevelSlider = memo<CreatedLevelSliderProps<T>>(
-    ({ value: controlledValue, onChange: controlledOnChange, defaultValue: propDefaultValue }) => {
+    ({
+      value: controlledValue,
+      onChange: controlledOnChange,
+      defaultValue: propDefaultValue,
+      disabled,
+    }) => {
       const dv = propDefaultValue ?? defaultValue;
-      const isControlled = controlledValue !== undefined || controlledOnChange !== undefined;
+      const isControlled =
+        controlledValue !== undefined || controlledOnChange !== undefined || disabled;
 
       if (isControlled) {
         // Controlled mode: use props only, no store access
         return (
           <LevelSliderInner
             defaultValue={dv}
+            disabled={disabled}
             value={controlledValue ?? dv}
             onChange={controlledOnChange ?? (() => {})}
           />

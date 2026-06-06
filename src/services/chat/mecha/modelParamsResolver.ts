@@ -195,12 +195,12 @@ export const resolveModelExtendParams = (ctx: ModelParamsContext): ModelExtendPa
   }
 
   // Reasoning effort variants
-  if (modelExtendParams.includes('reasoningEffort') && chatConfig.reasoningEffort) {
-    extendParams.reasoning_effort = chatConfig.reasoningEffort;
+  if (modelExtendParams.includes('reasoningEffort')) {
+    extendParams.reasoning_effort = chatConfig.reasoningEffort || 'medium';
   }
 
-  if (modelExtendParams.includes('gpt5ReasoningEffort') && chatConfig.gpt5ReasoningEffort) {
-    extendParams.reasoning_effort = chatConfig.gpt5ReasoningEffort;
+  if (modelExtendParams.includes('gpt5ReasoningEffort')) {
+    extendParams.reasoning_effort = chatConfig.gpt5ReasoningEffort || 'medium';
   }
 
   if (modelExtendParams.includes('gpt5_1ReasoningEffort') && chatConfig.gpt5_1ReasoningEffort) {
@@ -208,30 +208,32 @@ export const resolveModelExtendParams = (ctx: ModelParamsContext): ModelExtendPa
   }
 
   if (modelExtendParams.includes('gpt5_2ReasoningEffort')) {
-    extendParams.reasoning_effort = chatConfig.gpt5_2ReasoningEffort || 'medium';
+    // See-what-you-send: mirror the model-aware UI default in ControlsForm — only the
+    // native `gpt-5.5` slider shows medium; gpt-5.2 and openrouter gpt-5.x show none.
+    // Defaulting unset configs to medium for the latter would send medium while the UI
+    // shows none.
+    extendParams.reasoning_effort =
+      chatConfig.gpt5_2ReasoningEffort || (model === 'gpt-5.5' ? 'medium' : 'none');
   }
 
-  if (
-    modelExtendParams.includes('gpt5_2ProReasoningEffort') &&
-    chatConfig.gpt5_2ProReasoningEffort
-  ) {
-    extendParams.reasoning_effort = chatConfig.gpt5_2ProReasoningEffort;
+  if (modelExtendParams.includes('gpt5_2ProReasoningEffort')) {
+    extendParams.reasoning_effort = 'high';
   }
 
-  if (modelExtendParams.includes('grok4_20ReasoningEffort') && chatConfig.grok4_20ReasoningEffort) {
-    extendParams.reasoning_effort = chatConfig.grok4_20ReasoningEffort;
+  if (modelExtendParams.includes('grok4_20ReasoningEffort')) {
+    extendParams.reasoning_effort = chatConfig.grok4_20ReasoningEffort || 'medium';
   }
 
-  if (modelExtendParams.includes('grok4_3ReasoningEffort') && chatConfig.grok4_3ReasoningEffort) {
-    extendParams.reasoning_effort = chatConfig.grok4_3ReasoningEffort;
+  if (modelExtendParams.includes('grok4_3ReasoningEffort')) {
+    extendParams.reasoning_effort = chatConfig.grok4_3ReasoningEffort || 'low';
   }
 
-  if (modelExtendParams.includes('hy3ReasoningEffort') && chatConfig.hy3ReasoningEffort) {
-    extendParams.reasoning_effort = chatConfig.hy3ReasoningEffort;
+  if (modelExtendParams.includes('hy3ReasoningEffort')) {
+    extendParams.reasoning_effort = chatConfig.hy3ReasoningEffort || 'high';
   }
 
-  if (modelExtendParams.includes('codexMaxReasoningEffort') && chatConfig.codexMaxReasoningEffort) {
-    extendParams.reasoning_effort = chatConfig.codexMaxReasoningEffort;
+  if (modelExtendParams.includes('codexMaxReasoningEffort')) {
+    extendParams.reasoning_effort = chatConfig.codexMaxReasoningEffort || 'medium';
   }
 
   // DeepSeek reasoning effort is reconciled last to avoid invalid combinations.
