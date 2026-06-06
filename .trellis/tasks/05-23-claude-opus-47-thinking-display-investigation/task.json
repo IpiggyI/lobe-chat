@@ -1,0 +1,32 @@
+{
+  "id": "claude-opus-47-thinking-display-investigation",
+  "name": "claude-opus-47-thinking-display-investigation",
+  "title": "Claude Opus 4.7 思考块不显示深度调研",
+  "description": "排查 Claude Opus 4.7 思考块不可见的多重根因：display 字段缺失、enableAdaptiveThinking 4.6→4.7 复用错误、slider defaultValue 不写入 store。本任务仅做调研与方案论证，不实施代码改动。",
+  "status": "in_progress",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P1",
+  "creator": "IpiggyI",
+  "assignee": "IpiggyI",
+  "createdAt": "2026-05-23",
+  "completedAt": null,
+  "branch": "main",
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": "a199d6a30f",
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [
+    "src/services/chat/mecha/modelParamsResolver.ts",
+    "packages/model-runtime/src/core/anthropicCompatibleFactory/index.ts",
+    "packages/model-runtime/src/providers/bedrock/index.ts",
+    "packages/model-runtime/src/providers/anthropic/index.test.ts",
+    "src/features/ModelSwitchPanel/components/ControlsForm/ControlsForm.tsx"
+  ],
+  "notes": "2026-06-04 调研转实施并 commit a199d6a30f：H1 display(factory/bedrock) + H2 默认 adaptive(resolver) + H3 opus47Effort + GPT-5.5 gpt5_2ReasoningEffort medium；含 F1(anthropic provider 测试同步) + F2(ControlsForm UI Switch model-aware 默认)。两轮独立 trellis-check 全绿(186 tests，type-check 通过)，push origin main，待 Vercel 实测运行时思考块(GPT-5.5 若仍无则升 high)。",
+  "meta": {}
+}
