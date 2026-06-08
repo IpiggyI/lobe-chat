@@ -146,6 +146,34 @@ function summarizePayload(payload: unknown): unknown {
       continue;
     }
 
+    // Summarize input array (OpenAI Responses API format)
+    if (key === 'input' && Array.isArray(value)) {
+      result[key] = {
+        count: value.length,
+        items: value.map((item: any) => {
+          if (!item || typeof item !== 'object') return { type: 'unknown' };
+          const summary: any = { type: item.type };
+          if (item.role) summary.role = item.role;
+          if (item.type === 'input_text' || item.type === 'output_text') {
+            summary.textLength = typeof item.text === 'string' ? item.text.length : 0;
+          }
+          if (item.type === 'function_call') {
+            summary.name = item.name;
+          }
+          if (item.type === 'function_call_output') {
+            summary.outputLength = typeof item.output === 'string' ? item.output.length : 0;
+          }
+          if (item.type === 'reasoning') {
+            const summaryArray = Array.isArray(item.summary) ? item.summary : [];
+            summary.summaryLength = summaryArray.reduce((acc: number, s: any) =>
+              acc + (typeof s.text === 'string' ? s.text.length : 0), 0);
+          }
+          return summary;
+        }),
+      };
+      continue;
+    }
+
     // Redact system instruction content
     if (key === 'systemInstruction' || key === 'system') {
       result[key] = typeof value === 'string'

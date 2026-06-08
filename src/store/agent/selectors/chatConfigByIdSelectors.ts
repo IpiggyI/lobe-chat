@@ -78,8 +78,8 @@ const getRuntimeModeById =
 
 const getSkillActivateModeById =
   (agentId: string) =>
-  (s: AgentStoreState): 'auto' | 'manual' =>
-    getChatConfigById(agentId)(s).skillActivateMode ?? 'manual';
+  (s: AgentStoreState): 'auto' | 'manual' | undefined =>
+    getChatConfigById(agentId)(s).skillActivateMode;
 
 /**
  * Resolve the agent's tool mode via the shared `resolveToolMode` helper, so

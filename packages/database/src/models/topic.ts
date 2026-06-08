@@ -269,11 +269,16 @@ export class TopicModel {
           )
         : undefined;
 
+    // Exclude ephemeral (incognito) topics from query results.
+    // `mode IS NULL` covers legacy rows written before the column was introduced.
+    const excludeEphemeralCondition = or(isNull(topics.mode), ne(topics.mode, 'temp'));
+
     // If groupId is provided, query topics by groupId directly
     if (groupId) {
       const whereCondition = and(
         this.ownership(),
         eq(topics.groupId, groupId),
+        excludeEphemeralCondition,
         includeTriggerCondition,
         excludeTriggerCondition,
         triggerCondition,
@@ -340,6 +345,7 @@ export class TopicModel {
       const agentWhere = and(
         this.ownership(),
         agentCondition,
+        excludeEphemeralCondition,
         includeTriggerCondition,
         excludeTriggerCondition,
         triggerCondition,
@@ -397,6 +403,7 @@ export class TopicModel {
     const whereCondition = and(
       this.ownership(),
       this.matchContainer(containerId),
+      excludeEphemeralCondition,
       includeTriggerCondition,
       excludeTriggerCondition,
       triggerCondition,

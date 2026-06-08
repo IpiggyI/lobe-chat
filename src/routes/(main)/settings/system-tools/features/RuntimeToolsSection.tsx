@@ -131,7 +131,7 @@ RuntimeToolSwitch.displayName = 'RuntimeToolSwitch';
  */
 const ActivateModeSegmented = memo(() => {
   const { t } = useTranslation('setting');
-  const currentMode = useUserStore((s) => userToolSettingsSelectors.skillActivateMode(s) ?? 'manual');
+  const currentMode = useUserStore((s) => userToolSettingsSelectors.skillActivateMode(s) ?? 'auto');
   const updateMode = useToolStore((s) => s.updateUserSkillActivateMode);
 
   return (

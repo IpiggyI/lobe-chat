@@ -37,7 +37,7 @@ const isLocalSystemEnabled = (s: AgentStoreState) =>
 const isCloudSandboxEnabled = (s: AgentStoreState) =>
   chatConfigByIdSelectors.getRuntimeModeById(s.activeAgentId || '')(s) === 'cloud';
 
-const skillActivateMode = (s: AgentStoreState) =>
+const skillActivateMode = (s: AgentStoreState): 'auto' | 'manual' | undefined =>
   chatConfigByIdSelectors.getSkillActivateModeById(s.activeAgentId || '')(s);
 
 const enableHistoryDivider =

@@ -69,6 +69,8 @@ import {
   toolSelectors,
 } from '@/store/tool/selectors';
 import { ComposioServerStatus } from '@/store/tool/slices/composioStore';
+import { getUserStoreState } from '@/store/user';
+import { userToolSettingsSelectors } from '@/store/user/slices/settings/selectors';
 
 import {
   getRuntimeModelKnowledgeCutoff,
@@ -469,8 +471,11 @@ export const contextEngineering = async ({
   //   enabled, since they're solely needed for createAgent / updateAgent.
   let agentManagementContext: AgentManagementContext | undefined;
 
-  const isInAutoSkillMode =
-    agentChatConfigSelectors.skillActivateMode(agentStoreState) !== 'manual';
+  // Resolve skillActivateMode with correct fallback chain: agent ?? user ?? 'auto'
+  const agentSkillMode = agentChatConfigSelectors.currentChatConfig(agentStoreState).skillActivateMode;
+  const userSkillMode = userToolSettingsSelectors.skillActivateMode(getUserStoreState());
+  const resolvedSkillMode = agentSkillMode ?? userSkillMode ?? 'auto';
+  const isInAutoSkillMode = resolvedSkillMode !== 'manual';
   const shouldInjectAvailableAgents = isInAutoSkillMode || isAgentManagementEnabled;
 
   if (shouldInjectAvailableAgents) {

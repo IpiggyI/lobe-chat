@@ -278,7 +278,7 @@ export const applyModelExtendParams = (ctx: ApplyModelExtendParamsContext): Mode
   }
 
   if (modelExtendParams.includes('step3_5ReasoningEffort')) {
-    extendParams.reasoning_effort = chatConfig.step3_5ReasoningEffort || 'medium';
+    extendParams.reasoning_effort = chatConfig.step3_5ReasoningEffort || 'low';
   }
 
   // Text verbosity

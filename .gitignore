@@ -159,4 +159,10 @@ docs/superpowers/
 .ace-tool/
 .vercel
 
+# Local AI runtime and context artifacts
 .memory/
+.ccg/
+docs/context/
+docs/summary/
+docs/logs/
+docs/plans/

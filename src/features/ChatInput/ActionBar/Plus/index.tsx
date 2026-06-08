@@ -45,7 +45,7 @@ import {
   useServerConfigStore,
 } from '@/store/serverConfig';
 import { useUserStore } from '@/store/user';
-import { settingsSelectors } from '@/store/user/selectors';
+import { userToolSettingsSelectors } from '@/store/user/slices/settings/selectors';
 
 import { useAgentId } from '../../hooks/useAgentId';
 import { useUpdateAgentConfig } from '../../hooks/useUpdateAgentConfig';
@@ -310,9 +310,11 @@ const PlusAction = memo(() => {
       s.toggleRightPanel,
     ]);
   const isParamsPanelActive = Boolean(showRightPanel) && workingSidebarTab === 'params';
-  const skillActivateMode = useAgentStore((s) =>
+  const agentSkillMode = useAgentStore((s) =>
     chatConfigByIdSelectors.getSkillActivateModeById(agentId)(s),
   );
+  const userSkillMode = useUserStore(userToolSettingsSelectors.skillActivateMode);
+  const skillActivateMode = agentSkillMode ?? userSkillMode ?? 'auto';
   const [searchMode, useModelBuiltinSearch, disableGatewayMode] = useAgentStore((s) => [
     chatConfigByIdSelectors.getSearchModeById(agentId)(s),
     chatConfigByIdSelectors.getUseModelBuiltinSearchById(agentId)(s),

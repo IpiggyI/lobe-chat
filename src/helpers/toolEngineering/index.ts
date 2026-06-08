@@ -37,6 +37,7 @@ import {
 } from '@/store/tool/selectors';
 import { connectorSelectors } from '@/store/tool/slices/connector';
 import { useUserStore } from '@/store/user';
+import { userToolSettingsSelectors } from '@/store/user/slices/settings/selectors';
 import { settingsSelectors } from '@/store/user/selectors';
 
 import { getSearchConfig } from '../getSearchConfig';
@@ -206,6 +207,11 @@ export const createAgentToolsEngine = (
     settingsSelectors.memoryEnabled(useUserStore.getState());
   const webBrowsingEnabled = searchConfig.useApplicationBuiltinSearchTool;
 
+  // Resolve skillActivateMode with correct fallback chain: agent ?? user ?? 'auto'
+  const agentSkillMode = agentChatConfigSelectors.currentChatConfig(agentState).skillActivateMode;
+  const userSkillMode = userToolSettingsSelectors.skillActivateMode(useUserStore.getState());
+  const resolvedSkillMode = agentSkillMode ?? userSkillMode ?? 'auto';
+
   const chatModeRules = {
     [KnowledgeBaseManifest.identifier]: kbEnabled,
     [MemoryManifest.identifier]: memoryEnabled,
@@ -232,7 +238,7 @@ export const createAgentToolsEngine = (
     [MemoryManifest.identifier]: memoryEnabled,
     [WebBrowsingManifest.identifier]: webBrowsingEnabled,
     // Manual mode: suppress all runtime-managed tools (zero auto-injection)
-    ...(agentChatConfigSelectors.skillActivateMode(agentState) === 'manual'
+    ...(resolvedSkillMode === 'manual'
       ? Object.fromEntries(runtimeManagedToolIds.map((id) => [id, false]))
       : {}),
     // Global disable overrides all above (must be last to take precedence)
