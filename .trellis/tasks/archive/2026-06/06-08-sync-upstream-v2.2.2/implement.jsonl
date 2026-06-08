@@ -1,0 +1,5 @@
+{"file": ".trellis/tasks/06-08-sync-upstream-v2.2.2/implement.md", "reason": "Rebase execution plan with per-commit conflict playbook"}
+{"file": ".trellis/tasks/06-08-sync-upstream-v2.2.2/resolution-plan.md", "reason": "Per-file conflict resolution strategy"}
+{"file": ".trellis/tasks/06-08-sync-upstream-v2.2.2/digest.md", "reason": "Upstream change digest (92 commits categorized)"}
+{"file": ".memory/tasks/2026-05/05-30-sync-upstream-v2.2.1/what.md", "reason": "v2.2.1 sync playbook — lessons learned, untracked collision trap, conflict handling"}
+{"file": ".git/sync-upstream-state.json", "reason": "Sync state: last target, collision dirs, lockfile strategy"}
