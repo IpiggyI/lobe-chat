@@ -72,3 +72,37 @@ Synced fork from v2.1.51 to v2.1.58 via /sync-upstream skill. Absorbed 570 upstr
 ### Next Steps
 
 - None - task complete
+
+
+## Session 3: 修复 v2.2.2 sync 后的 5 个 Codex review 问题
+
+**Date**: 2026-06-08
+**Task**: 修复 v2.2.2 sync 后的 5 个 Codex review 问题
+**Branch**: `main`
+
+### Summary
+
+修复 Codex 评审发现的 5 个问题：P1-2 step3_5ReasoningEffort 默认值改为 low；P2-2 SearchService 测试改为 rejects.toThrow；P1-1 rawCallLogger 增加 Responses API input 摘要；P1-3 skillActivateMode 统一默认链为 agent ?? user ?? 'auto'（7 个文件）；P2-1 TopicModel.query 排除 temp topics 时保留 legacy NULL 兼容性（使用 or(isNull, ne) 而非单独 ne）。已推送 v2.2.2-canary.1 tag 到远程。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `77fbb4ef28` | (see git log) |
+| `d4e7e110ce` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
