@@ -1,0 +1,7 @@
+{"file": ".trellis/tasks/06-14-sync-upstream-v2-2-3/design.md", "reason": "技术分析：17 冲突分域、#89 server 路径迁移、4 段锚点、预演首卡点、安全区"}
+{"file": ".trellis/tasks/06-14-sync-upstream-v2-2-3/implement.md", "reason": "4 段 rebase 执行清单 + 分段验证 tier + 回滚点"}
+{"file": ".trellis/tasks/06-14-sync-upstream-v2-2-3/digest.md", "reason": "上游 134-commit 分类摘要 + DB 迁移 0106-0110 清单"}
+{"file": ".git/sync-upstream-state.json", "reason": "同步状态：上次 v2.2.2 push PENDING、untracked 碰撞目录清单、lockfile 策略"}
+{"file": ".memory/tasks/2026-05/05-30-sync-upstream-v2.2.1/what.md", "reason": "历史 sync playbook：untracked 碰撞陷阱、冲突处理经验"}
+{"file": ".memory/conventions/post-sync-hygiene.md", "reason": "同步后必须先 pnpm install 再 commit（lockfile gitignored）"}
+{"file": ".trellis/tasks/archive/2026-06/06-08-sync-upstream-v2.2.2/resolution-plan.md", "reason": "上次 v2.2.2 逐文件冲突解决策略（topic/incognito/effort 等定制）"}
