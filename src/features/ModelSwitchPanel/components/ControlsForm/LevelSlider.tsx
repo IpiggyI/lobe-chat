@@ -89,7 +89,6 @@ export interface LevelSliderProps<T extends string = string> {
    * Default value when uncontrolled
    */
   defaultValue?: T;
-  disabled?: boolean;
   /**
    * Lock the slider: antd slider + every level label become non-interactive.
    */
@@ -156,7 +155,6 @@ function LevelSlider<T extends string = string>({
   onChange,
   marks: customMarks,
   style,
-  disabled,
 }: LevelSliderProps<T>) {
   const defaultLevel = defaultValue ?? levels[Math.floor(levels.length / 2)];
 
