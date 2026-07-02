@@ -192,12 +192,14 @@ export const applyModelExtendParams = (ctx: ApplyModelExtendParamsContext): Mode
   }
 
   // Reasoning effort variants
-  if (modelExtendParams.includes('reasoningEffort') && chatConfig.reasoningEffort) {
-    extendParams.reasoning_effort = chatConfig.reasoningEffort;
+  // See-what-you-send: each `|| default` mirrors the ControlsForm slider's
+  // displayed default, so an unset config sends exactly what the UI shows.
+  if (modelExtendParams.includes('reasoningEffort')) {
+    extendParams.reasoning_effort = chatConfig.reasoningEffort || 'medium';
   }
 
-  if (modelExtendParams.includes('gpt5ReasoningEffort') && chatConfig.gpt5ReasoningEffort) {
-    extendParams.reasoning_effort = chatConfig.gpt5ReasoningEffort;
+  if (modelExtendParams.includes('gpt5ReasoningEffort')) {
+    extendParams.reasoning_effort = chatConfig.gpt5ReasoningEffort || 'medium';
   }
 
   if (modelExtendParams.includes('gpt5_1ReasoningEffort') && chatConfig.gpt5_1ReasoningEffort) {
@@ -213,27 +215,24 @@ export const applyModelExtendParams = (ctx: ApplyModelExtendParamsContext): Mode
       chatConfig.gpt5_2ReasoningEffort || (model === 'gpt-5.5' ? 'medium' : 'none');
   }
 
-  if (
-    modelExtendParams.includes('gpt5_2ProReasoningEffort') &&
-    chatConfig.gpt5_2ProReasoningEffort
-  ) {
-    extendParams.reasoning_effort = chatConfig.gpt5_2ProReasoningEffort;
+  if (modelExtendParams.includes('gpt5_2ProReasoningEffort')) {
+    extendParams.reasoning_effort = 'high';
   }
 
   if (modelExtendParams.includes('glm5_2ReasoningEffort') && chatConfig.glm5_2ReasoningEffort) {
     extendParams.reasoning_effort = chatConfig.glm5_2ReasoningEffort;
   }
 
-  if (modelExtendParams.includes('grok4_20ReasoningEffort') && chatConfig.grok4_20ReasoningEffort) {
-    extendParams.reasoning_effort = chatConfig.grok4_20ReasoningEffort;
+  if (modelExtendParams.includes('grok4_20ReasoningEffort')) {
+    extendParams.reasoning_effort = chatConfig.grok4_20ReasoningEffort || 'medium';
   }
 
-  if (modelExtendParams.includes('grok4_3ReasoningEffort') && chatConfig.grok4_3ReasoningEffort) {
-    extendParams.reasoning_effort = chatConfig.grok4_3ReasoningEffort;
+  if (modelExtendParams.includes('grok4_3ReasoningEffort')) {
+    extendParams.reasoning_effort = chatConfig.grok4_3ReasoningEffort || 'low';
   }
 
-  if (modelExtendParams.includes('hy3ReasoningEffort') && chatConfig.hy3ReasoningEffort) {
-    extendParams.reasoning_effort = chatConfig.hy3ReasoningEffort;
+  if (modelExtendParams.includes('hy3ReasoningEffort')) {
+    extendParams.reasoning_effort = chatConfig.hy3ReasoningEffort || 'high';
   }
 
   if (modelExtendParams.includes('ring2_6ReasoningEffort') && chatConfig.ring2_6ReasoningEffort) {
