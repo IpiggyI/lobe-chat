@@ -5,7 +5,7 @@ import { createStaticStyles } from 'antd-style';
 import { ListTodo, type LucideIcon, Palette } from 'lucide-react';
 import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 
 interface QuickEntryItem {
   icon: LucideIcon;
@@ -59,7 +59,7 @@ const QuickEntries = memo(() => {
   );
 
   return (
-    <Flexbox align={'flex-start'} className={styles.container} gap={20} horizontal>
+    <Flexbox horizontal align={'flex-start'} className={styles.container} gap={20}>
       {entries.map((item) => (
         <Flexbox
           align={'center'}

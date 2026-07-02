@@ -1,6 +1,6 @@
 'use client';
 
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 
 import Footer from '@/features/Setting/Footer';
 import { parseAsString, useQueryState } from '@/hooks/useQueryParam';

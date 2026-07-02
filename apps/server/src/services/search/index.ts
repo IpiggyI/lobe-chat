@@ -52,11 +52,10 @@ const getMemorySnapshot = () => {
 
 /**
  * Search service class
- * Uses Round-Robin + Fallback strategy across configured providers
+ * Uses different implementations for different search operations
  */
 export class SearchService {
-  private currentIndex = 0;
-  private searchImplInstances: SearchServiceImpl[];
+  private searchImpList: SearchServiceImpl[];
 
   private get crawlerImpls() {
     return parseImplEnv(toolsEnv.CRAWLER_IMPLS);
@@ -71,11 +70,10 @@ export class SearchService {
   }
 
   constructor() {
-    const implTypes = this.searchImplTypes;
-
-    this.searchImplInstances =
-      implTypes.length > 0
-        ? implTypes.map((type) => createSearchServiceImpl(type))
+    const impls = this.searchImpls;
+    this.searchImpList =
+      impls.length > 0
+        ? impls.map((impl) => createSearchServiceImpl(impl))
         : [createSearchServiceImpl()];
   }
 
@@ -155,44 +153,33 @@ export class SearchService {
     return !('contentType' in result.data);
   }
 
-  /**
-   * Get the next provider index via Round-Robin
-   */
-  private getNextIndex(): number {
-    const index = this.currentIndex;
-    this.currentIndex = (this.currentIndex + 1) % this.searchImplInstances.length;
-    return index;
-  }
-
-  private get searchImplTypes() {
+  private get searchImpls() {
     return parseImplEnv(toolsEnv.SEARCH_PROVIDERS) as SearchImplType[];
   }
 
   /**
-   * Query with Round-Robin provider selection and Fallback on error
+   * Query for search results using the specified impl
+   */
+  private async queryWithImpl(impl: SearchServiceImpl, query: string, params?: SearchParams) {
+    try {
+      return await impl.query(query, params);
+    } catch (e) {
+      console.error('[SearchService] query failed:', (e as Error).message);
+      return {
+        costTime: 0,
+        errorDetail: (e as Error).message,
+        query,
+        resultNumbers: 0,
+        results: [],
+      };
+    }
+  }
+
+  /**
+   * Query for search results (uses the first provider)
    */
   async query(query: string, params?: SearchParams) {
-    const impls = this.searchImplInstances;
-    const primaryIndex = this.getNextIndex();
-
-    // Try the primary provider first
-    try {
-      return await impls[primaryIndex].query(query, params);
-    } catch (primaryError) {
-      // Fallback: try remaining providers in order
-      for (let i = 0; i < impls.length; i++) {
-        if (i === primaryIndex) continue;
-
-        try {
-          return await impls[i].query(query, params);
-        } catch {
-          // continue to next provider
-        }
-      }
-
-      // All providers failed, throw the primary error
-      throw primaryError;
-    }
+    return this.queryWithImpl(this.searchImpList[0], query, params);
   }
 
   async webSearch({ query, searchCategories, searchEngines, searchTimeRange }: SearchQuery) {

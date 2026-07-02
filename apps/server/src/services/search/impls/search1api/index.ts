@@ -8,7 +8,14 @@ import debug from 'debug';
 import urlJoin from 'url-join';
 
 import { type SearchServiceImpl } from '../type';
-import { type Search1ApiResponse } from './type';
+import { type Search1ApiRawResponse, type TimeRange } from './type';
+
+const timeRangeMapping: Record<string, TimeRange | undefined> = {
+  day: 'day',
+  month: 'month',
+  week: 'month', // Search1API doesn't support 'week', map to closest
+  year: 'year',
+};
 
 interface Search1APIQueryParams {
   crawl_results?: 0 | 1;
@@ -55,7 +62,7 @@ export class Search1APIImpl implements SearchServiceImpl {
         ...defaultQueryParams,
         time_range:
           params?.searchTimeRange && params.searchTimeRange !== 'anytime'
-            ? params.searchTimeRange
+            ? timeRangeMapping[params.searchTimeRange]
             : undefined,
       },
     ];
