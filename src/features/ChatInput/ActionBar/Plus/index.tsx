@@ -45,6 +45,7 @@ import {
   useServerConfigStore,
 } from '@/store/serverConfig';
 import { useUserStore } from '@/store/user';
+import { settingsSelectors } from '@/store/user/selectors';
 import { userToolSettingsSelectors } from '@/store/user/slices/settings/selectors';
 
 import { useAgentId } from '../../hooks/useAgentId';
